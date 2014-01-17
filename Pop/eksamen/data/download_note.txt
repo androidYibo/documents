@@ -1,0 +1,10 @@
+Data er hentet fra JPL Horizons hjemmesiden http://ssd.jpl.nasa.gov/horizons.cgi
+
+Følgende valg blev foretaget:
+Ephemeris Type [change] :  	VECTORS
+Coordinate Origin [change] :  	Solar System Barycenter (SSB) [500@0]
+Time Span [change] :  	Start=2013-01-01, Stop=2014-01-01, Step=1 MO
+Table Settings [change] :  	quantities code=2; CSV format=YES
+Display/Output [change] :  	download/save (plain text file)
+
+For flere detaljer se JPL_Ephemeris_README.txt

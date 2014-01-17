@@ -1,0 +1,127 @@
+Disclaimer: Jeg ved godt at hverken solen eller pluto er planeter og min
+navngivning af klassen Planet derfor ikke er teknisk korrekt, men da solen
+og dværgplaneten har samme funktion som planeterne i vores solsystem i 
+forhold til vores simulation, valgte jeg at være ukorrekt for at gøre koden
+mere læsbar.
+
+
+
+a) Overvejelser og valg:
+
+
+Planet klassen:
+
+    Jeg har valgt at behandle planeterne som objekter via min planetklasse.
+    Denne klasse har som job at holde styr på sin egen position, hastighed
+    og GM. Derudover har den en række funktioner der hjælper den med at 
+    udregne dens acceleration i forhold til en liste af andre planeter.
+    Dette bruger den find_acceleration_n til.
+
+    Jeg har valgt at lave en Planet klasse til at håndtere planeterne
+    da jeg mener det gør det nemmere at skalere til størere solsystemer, 
+    og det fjerner håndtering af acceleration fra metodernes funktioner
+    til planeterne selv. Derudover mener jeg dette er en pænere og mere
+    objektorienteret måde at gøre det på. 
+
+
+    2-legeme model:
+
+        Jeg har ikke benyttet find_acceleration_2 til noget i mine plots, da man 
+        via min implementation kan benytte find_acceleration_n til at simulere en
+        2-legemes model. Den kan dog benyttes. 
+        Dette gøres ved at først at initiere de to planeter via klassens 
+        konstruktør og derefter kører find_acceleration_2 på den ene planet med 
+        anden som parameter. 
+
+Parser:
+
+    Jeg har skrevet min egen parser til håndtering af JPL dataen. Parseren er
+    meget simpel. Den tager input filerne og splitter linjen med dataen op i
+    en liste, først en liste med hver tidsenhed og derefter en liste af lister
+    hvor al position og hastighedsinformationen er gemt som floats. I parse_planet
+    bliver den første position og den første hastighed derefter lavet om til en
+    planet. I parse_path bliver denne information gemt i en numpy liste, plottet
+    ud og numpylisten af planeter bliver derefter returneret 
+
+
+Metoderne:
+    
+    Jeg har pakket metoderne ind i en funktion calculate_path. Dette har jeg
+    gjort for at sparer kodelinjer og gøre selve metode funktionerne mere
+    overskuelige at se på. calculate_path og plots eneste funktioner er at
+    lave alle de ting som skal ske rundt om metoderne som at lave og vise
+    plots, og holde styr på hvilke planeter og tidsrum simulationen befinder
+    sig i
+  
+
+    Midtpunkts_metoden:
+
+        Mit valg om at lave planeterne om til klasser gav mit problemer under
+        midtpunkts metoden, da jeg skulle flytte en planets position til et
+        midlertidigt punkt for at udregne accelerationen i forholde til r_est. 
+        Dette problem løste jeg ved at lave en ekstra funktion i Planet som
+        kan flytte planetens position midlertidigt imens den laver
+        udregningerne hvorefter den bliver flyttet tilbage til dens
+        oprindelige position.
+
+    Euler og Runge_Kutta metoderne:
+
+        Jeg stødte ikke ind i mange programmeringsmæssige problemer under
+        udviklingen af disse metoder. Da det primært var udregninger 
+        implementeret lige fra formlerne
+
+Testning:
+
+    Jeg har lavet en testfil TestSimulation der kører en række tests på både
+    planets klassen og selve simulationen. Dataen til testne er meget anderledes
+    end i den virkelige verden, men det er for bedre at få en ide om funktionerne
+    virker da det er svært at bedømme korrektheden af returværdierne i et
+    solsystem.
+
+
+b) Fortolkning af grafernes indhold
+    
+    2d og 3d plots:
+        
+        Disse plots er gemt under billeder/2d/%'metode' og billeder/3d/%'metode'
+
+        Euler:
+            
+            Euler metoden har vist sig at være overaskende præsis i forhold
+            til den virkelige data i mange af tilfældene. Dog viser graferne til 
+            Jorden (3d) og Pluto (2d og 3d) er der er nogen division i forhold 
+            til den givne data, og den derfor nok indenfor en kort årrække
+            ville have stor upræsision.
+
+        Midtpunkts Metoden:
+
+            Metoden ligner til forveksling graferne fra Euler metoden. 
+            Dette forestiller jeg mig er grundet vores korte tidsperiode med
+            sammenligningsdataen. Da jeg ikke tror den ekstra præcision midtpunkts
+            metoden har er synlig på plots af denne størelse. 
+            
+        Runge Kutta Metoden:
+
+            Endnu engang er den eneste tydelige division i pluto og jorden.
+            Jeg kan derfor ikke lave nogen konklusioner om metodens
+            nøjagtighed ud fra disse plots. Jeg kan derimod sige 
+            at simulationen er meget tæt på virkelighedens verden.
+   
+
+    2d og 3d JPL:
+
+        Disse billeder kan findes i henholdvis 2d og 3d mappen og er kaldet
+        xd_Data_All    
+ 
+
+    Forskellen imellem simulation og virkelighed:
+        
+        I mappen billeder/dif findes alle billederne af forskellen imellem
+        simulationen og JPL's data. Det gælder generalt at desto tættere på
+        0 desto mere præcis er modelen. En summering af præcisionen fortæller
+        mig at Runge_Kutta er marginalt mere præcis end de andre modeller
+        men at det er meget lidt. De to første modeler har næsten identiske
+        summeringer af diferans. Med Midtpunkts metoden værenede mest præcis
+
+            
+
