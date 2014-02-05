@@ -1,0 +1,170 @@
+\ProvidesPackage{ap}
+
+% General packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{textcomp}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{inconsolata}
+\usepackage{ifthen}
+\usepackage{mathtools}
+%\usepackage{underscore}
+\usepackage{grffile}
+
+% Misc.
+\usepackage[svgnames]{xcolor}
+\usepackage{pdfpages}
+\usepackage{alltt}
+\usepackage[strict]{changepage}
+\usepackage{environ}
+\usepackage{ulem}
+\usepackage{fancyvrb}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{abstract}
+\usepackage{csquotes}
+\usepackage{longtable}
+\usepackage{syntonly}
+\usepackage{minted}
+\usepackage{fixme}
+\usepackage[bottom=2cm]{geometry}
+
+% Small additions
+\newcommand{\eqdo}[4]{\ifthenelse{\equal{#1}{#2}}{#3}{#4}}
+\newcommand{\hruler}[1][0.5mm]{\rule{\linewidth}{#1}}
+
+\renewcommand{\abstracttextfont}{\normalfont\normalsize}
+\renewcommand{\abstractnamefont}{\scshape\bfseries\large}
+
+
+% Basic style
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{4mm}
+\setlength{\headsep}{7mm}
+
+% Borders
+\setlength\fboxsep{5pt}
+\setlength\fboxrule{0.5pt}
+
+% Colors
+\definecolor{LinkColor}{rgb}{0,0,.02}
+\definecolor{CodeBG}{rgb}{.97,.97,.97}
+
+% Hyperref details
+\newcommand{\email}[1]{\href{mailto:#1}{\nolinkurl{#1}}}
+\newcommand{\dohypersetup}{
+  \hypersetup{
+    pdftitle={\@title},
+    pdfauthor={\@author},
+    pdfsubject={},
+    colorlinks=true,
+    linkcolor=LinkColor,  % color of internal links
+    citecolor=LinkColor,  % color of links to bibliography
+    urlcolor=LinkColor    % color of external links
+  }
+}
+
+% Fancy headers and footers
+\newcommand*{\blackpageref}[1]{%
+  \hypersetup{linkcolor=black}%
+  \pageref{#1}%
+  \hypersetup{linkcolor=LinkColor}%
+}
+\setlength{\headheight}{15.2pt}
+\fancyhf{}
+\pagestyle{fancyplain}
+\newcommand{\doheaderfootersetup}{
+  \lhead{\ttitle}
+  \chead{}
+  \rhead{\tauthor}
+  \lfoot{}
+  \cfoot{\thepage\ of \blackpageref{LastPage}}
+  \rfoot{}
+}
+\renewcommand{\sectionmark}[1]{\markright{#1}{}}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Setting it all up
+\newcommand{\setupdocument}{
+  \dohypersetup
+  \doheaderfootersetup
+}
+
+\newcommand{\adjustdocument}{
+  \normalem % For ulem
+}
+
+% Source code
+\usemintedstyle{emacs}
+\newminted{c}{frame=lines}
+%\newmint{c}{}
+\newenvironment{code}{\vspace{-0mm}\ccode}{\endccode\vspace{-7mm}}
+%\newcommand{\codei}[1]{\c{#1}}
+
+
+% TeX hack Color box
+\newcommand{\colourbox}[2][]{%
+  \newbox\contentbox%
+  \newbox\bkgdbox%
+  \setbox\contentbox\hbox to \hsize{%
+    \vtop{
+      \kern\columnsep
+      \hbox to \hsize{%
+        \kern\columnsep%
+        \advance\hsize by -2\columnsep%
+        \setlength{\textwidth}{\hsize}%
+        \vbox{
+          \parskip=\baselineskip
+          \parindent=0bp
+          #2
+        }%
+        \kern\columnsep%
+      }%
+      \kern\columnsep%
+    }%
+  }%
+  \setbox\bkgdbox\vbox{
+    \eqdo{#1}{}{\pdfliteral{0.9 0.9 0.9 rg}}{\pdfliteral{#1 rg}}
+    \hrule width  \wd\contentbox %
+    height \ht\contentbox %
+    depth  \dp\contentbox
+    \pdfliteral{0 0 0 rg}
+  }%
+  \wd\bkgdbox=0bp%
+  \vbox{\hbox to \hsize{\box\bkgdbox\box\contentbox}}%
+  \vskip\baselineskip%
+}
+
+
+
+% Front page
+% Inclusion of basic information
+% Default values
+\newcommand{\ttitle}{Titel}
+\newcommand{\tauthor}{Forfatter}
+\newcommand{\tdate}{\today}
+\newcommand{\tlogo}{}
+
+\let\otitle\title
+\let\oauthor\author
+\let\odate\date
+\renewcommand{\title}[1]{
+  \otitle{#1}
+  \renewcommand{\ttitle}{#1}
+}
+\renewcommand{\author}[1]{
+  \oauthor{#1}
+  \renewcommand{\tauthor}{#1}
+}
+\renewcommand{\date}[1]{
+  \odate{#1}
+  \renewcommand{\tdate}{#1}
+}
+\newcommand{\logo}[1]{
+  \renewcommand{\tlogo}{#1}
+}

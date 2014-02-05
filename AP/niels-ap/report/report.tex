@@ -1,0 +1,318 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage{ap}
+
+\title{Exam solution for Advanced Programming 2013}
+\author{Niels G. W. Serup}
+\setupdocument
+\begin{document}
+\adjustdocument
+\maketitle
+\tableofcontents
+
+
+\newpage
+\section{The Salsa Language}
+
+All Salsa-related source files are in \verb+src/salsa+.
+
+
+\subsection{Grammar modification}
+
+Operator associativity is left unspecified in the grammar.  I have chosen to
+assume left associativity where the choice between left and right affect the
+semantics, i.e. in \texttt{Expr '-' Prim}, and accept the ambiguity where the
+semantics are unaffected, i.e. in \texttt{Expr '+' Prim} and \texttt{Command 
+'||' Command}.
+
+I keep it ambigious because I think only the semantics of parsed programs are
+important.
+
+Specifically, with \texttt{Expr '-' Prim} you can have \texttt{2 - (1 - 1) != (2
+  - 1) - 1}, but the same is not the case for \texttt{+} and \texttt{||}.
+
+
+\subsection{Parser}
+
+My parser uses Parsec.  It assumes left associativity where I have left the
+associativity ambiguous.
+
+Most of the parser is fairly straightforward.  The only interesting pieces of
+code are those handling precedence and associativity in \verb+command'+ and
+\verb+expr'+.  I have used Parsec's \verb+chainl1+ to handle \texttt{Command
+  '||' Command}, and my own \verb+chainpre1+ to handle \texttt{Command '@'
+  Vident}, \texttt{Expr '+' Prim}, and \texttt{Expr '-' Prim}.
+
+\verb+chainl1+ is used to run the parsers of highest precedence first and then
+join them with lower precedence operators.  It runs on expressions of the type
+\verb+a ::= a op a+. \verb+chainpre1+ does the same, except it works on
+expressions of the type \verb+a ::= a op b+ instead.
+
+
+\subsection{Tests}
+
+To test the correctness of the parser, it is necessary to keep in mind the
+ambigious grammar.  What's important is that the semantics of a parsed program
+are right, so instead of testing by comparing parsed programs to ASTs, I have
+tested by comparing interpreted parsed program to animations.  The downside is
+that the tests depend on the correctness of the interpreter, but there is
+no other practical way unless the grammar is made unambigious.
+
+I have made two sets af manual tests and one QuickCheck property in
+\verb+SalsaParserTests.hs+.
+
+The first set of manual tests checks the animation interpreted from a parsed
+string.  The second set tests that strings with wrong grammar are not
+succesfully parsed.
+
+The QuickCheck property generates a program AST, formats it to a string, parses
+the string into a new AST, interprets both ASTs and compares the resulting
+animations.  This is done 1000 times.  Read more about my program generator in
+section 4.
+
+All tests pass, so my implementation is probably sound.  However, I cannot be
+sure until I have tested my interpreter, since it is used in the parser tests.
+
+
+
+\newpage
+\section{Interpreting Salsa}
+
+In my implementation, a shape is only drawn if a move happens, i.e. an animation
+with just one key frame has 0 frames.  I don't think this was clear from the
+exam text, but my way seems the simplest and fits nicely with the required
+functionality of \verb+interpolate+.
+
+
+\subsection{Salsa and SalsaCommand monads}
+
+These are my main types:
+\begin{minted}[frame=lines]{haskell}
+type Shape = Position -> Ident -> GpxInstr
+
+data Env = Env { views :: [(Ident, Integer, Integer)]
+               , groups :: [(Ident, [Ident])]
+               , shapes :: M.Map Ident (M.Map Ident Shape)
+               , activeViews :: [Ident]
+               , envFps :: Integer
+               }
+
+-- | The positions of the shapes in the views.
+type ShapePosMap = M.Map Ident (M.Map Ident Position)
+
+data Context = Context { contextEnv :: Env
+                       , contextSPM :: ShapePosMap
+                       }
+
+newtype SalsaCommand a = SalsaCommand {
+  runSC :: Context -> (ShapePosMap, [Frame], a) }
+
+newtype Salsa a = Salsa { runS :: Context -> (Context, [Frame], a) }
+\end{minted}
+
+\verb+Env+, \verb+ShapePosMap+ and \verb+Context+ holds what's required of them.
+\verb+SalsaCommand+ and \verb+Salsa+ are almost the same (also in their monad
+instances), the only difference being that \verb+Salsa+ can modify all of the
+\verb+Context+, and that \verb+SalsaCommand+ can only modify the
+\verb+ShapePosMap+.  This is because a Salsa \verb+Command+ should only move
+shapes and generate frames, not change the context in any way.
+
+Since \verb+Salsa+ and \verb+SalsaCommand+ are so alike, they can share several
+useful functions.  For this reason I have made a typeclass \verb+SalsaSomething+
+with the functions \verb+getContext+ and \verb+modifySPM+ which is instanced
+for both types.
+
+
+\subsection{Generating frames}
+
+The interesting part of the interpreter is how it generates frames.
+\verb+runProg+ starts a \verb+Salsa+ monad which, as long as there are
+\verb+Definition+s, just modifies the context state again and again.  When it
+sees a \verb+Command+, the \verb+SalsaCommand+ monad generates frames which are
+then appended to the existing frames in the \verb+Salsa+ monad state.
+
+For a given \verb+Command+, \verb+SalsaCommand+ generates frames this way:
+
+\begin{enumerate}
+\item Save the old shape positions.
+\item Create as many parallel commands as needed so that every command is
+  simplified to a move of just one shape.  If there is an \verb+At+, it needs to
+  be run in another environment, which is done by the \verb+withEnv+ function.
+\item For each shape move, calculate and set the new position for the shape in
+  all its active views.
+\item For each view, for each shape in that view, interpolate the frames to the
+  next key frame, and add them to the \verb+SalsaCommand+ state.
+\item Merge all the frame lists so that all lists will be executed concurrently
+  when run in an animation.
+\end{enumerate}
+
+The bind operation of the monad concatenates frames, so to merge them instead I
+have created another function, \verb+joinFrames+, which is similar to \verb+>>+
+except for merging.
+
+
+\subsection{Tests}
+
+I have created a set of manual tests and a set of QuickCheck properties in
+\verb+SalsaInterpTests.hs+.
+
+The manual tests each take an fps number, a program string, and the expected
+\verb+Animation+ and checks that the parsed program interpreted at the given fps
+results in the expected animation.  I have made manual tests for interpolating,
+shapes, multiple moves, views and groups, the \verb+@+ and \verb+||+ operators,
+and \verb+Expr+.
+
+The QuickCheck properties test the invariants:
+\begin{itemize}
+\item \verb+interpolate n p0 p1+ must return a sorted list where the last
+  element is \verb+p1+ if \verb+n /= 0+, and the length is \verb+n+.
+\item The number of frames must be equal to the number of non-parallel moves
+  times the framerate.
+\item All views of an AST must also be in the animation.
+\item When a shape occurs in the AST, it must also occur in at least one frame
+  in the animation (because the program generator makes sure to move all shapes
+  at least once).
+\item When a move-to-position is absolute, there must be at least one frame in
+  which a shape is at that position.
+\end{itemize}
+
+All tests pass.  However, some of the tests depend on the correctness of the
+parser, and since some of the parser tests depend on the correctness of the
+interpreter, there is a co-dependency problem here.  But since the QuickCheck
+properties in both the parser and interpreter are checked alongside manual tests
+which show that their outputs are clearly different for different inputs, it's
+probably not a problem, so my implementation is probably sound.
+
+All Salsa parser and interpreter tests can be run with \verb+test.hs+.  You can
+also run \verb+animate.hs+ to generate animations from files.
+
+
+\newpage
+\section{Atomic Transaction Server}
+
+The source files are in \verb+src/at_server+.
+
+I use OTP in my implementation.  My transaction server is split up into two
+FSMs: the master (\verb+at_server_master.erl+) and the helper
+(\verb+at_server_helper.erl+).  In \verb+at_server.erl+, the master is directly
+used for \verb+start/1+, \verb+stop/1+, \verb+doquery/2+, and \verb+begin_t/1+,
+while helpers are used for \verb+query_t/3+, \verb+update_t/3+ and
+\verb+commit_t/2+.
+
+
+\subsection{Master and helper functionality}
+
+There is only one state name, \verb+ready+.  When \verb+at_server:start(State)+
+is called, \verb+State+ is stored in the master FSM, and can only changed with a
+commit message from a helper.
+
+Even though the master aborts all transactions when accepting a commit from a
+helper process, another helper process might still have had time to send the
+master another commit.  To ensure that that commit is refused, the master and
+the helpers maintain \verb+Iter+ states.
+
+When a transaction is created, the master's \verb+Iter+ is copied to the helper,
+and when the helper tries to commit, the master only accepts it if their
+\verb+Iter+s are equal.  Once accepted, the master increases its \verb+Iter+
+with 1, thus refusing any further commits from currently dying processes.
+
+The helper also has only state name, \verb+ready+.  Like the master it maintains
+\verb+State+ and \verb+Iter+ states, but it also keeps a reference to its
+master.
+
+
+\subsection{PIDs instead of refs}
+
+In my implementation, transactions are referred to by PIDs instead of refs.  It
+seems easier and smarter than maintaining a dictionary in the master and having
+to query the master every time a helper is to run a command.
+
+One upside of the dictionary approach is that a transaction not created by the
+current master cannot commit to the current master.  With direct command
+passing, that upside isn't there.  I have corrected this by making checks in all
+helper functions used by the API that check whether the internal master pid
+equals the master pid in the API function call (like
+\verb+at_server:update_t(Master, ...)+
+
+On reflection, I realize that while refs created by \verb+make_ref+ are
+unique\footnote{\url{http://www.erlang.org/doc/man/erlang.html}}, I don't know
+about process ids.  If a new process takes over the id of a previous process,
+that might cause problems, but it doesn't appear to be a problem in my tests.
+
+
+\subsection{Limitations in \texttt{at\_extapi}}
+
+The requirement that functions in \verb+at_extapi.erl+ must contact the server
+via \verb+at_server.erl+ means that \verb+abort+ and \verb+ensureUpdate+ are not
+as efficient as they could be.
+
+To abort a transaction, \verb+abort+ has to exploit the fact that a transaction
+must fail if \verb+at_server:update_t/3+ fails with an error.  To do this, it
+sends a function to \verb+update_t+ which always fail.  A simpler way would be
+to just kill the transaction with \verb+exit(Helper, kill)+.
+
+The way \verb+ensureUpdate+ works is that it calls \verb+tryUpdate+ again and
+again until it returns \verb+ok+ or \verb+error+.  A simpler, less forceful way
+would be to extend the main API to accept updates directly on the master,
+although that would remove the concurrency.
+
+It is not specified in the exam text what to return in \verb+choiceUpdate+ if
+all return values are \verb+error+.  In my implementation, the final return
+value is then also \verb+error+.
+
+
+\subsection{Ensuring \texttt{aborted}}
+
+Assuming that no new process takes the pid of a previous process, a call to an
+aborted transaction will always return \verb+aborted+, since the implementation
+catches \verb+noproc+ errors.  However, a transaction might not \textbf{be}
+aborted at once, since \verb+at_extapi:abort/2+ is used to abort the processes.
+
+
+\subsection{Tests}
+
+I have added type specifications to most functions with \verb+-spec+, although I
+haven't tested them with Dialyzer; I put them there mostly for my own sake.
+
+The file \verb+at_server_tests.erl+ contains 6 hand-crafted tests of the
+transaction server which all pass.  The tests use the EUnit testing
+framework\footnote{\url{http://www.erlang.org/doc/apps/eunit/chapter.html}} and
+can be run with the generated function \verb+at_server_tests:test/0+.
+
+They test basic function application, sequential transactions, concurrent
+transactions, \verb+tryUpdate+, \verb+ensureUpdate+, and \verb+choiceUpdate+.
+That covers all of the API, so it seems my implementation is correct.
+
+
+
+\newpage
+\section{Salsa program generator}
+
+See \verb+SalsaGenerator.hs+.
+
+For some of the Salsa tests to work, there must be a program generator to create
+random Salsa ASTs.  For some tests there must also be a program text generator
+to transform an AST into a string.
+
+To create the random ASTs, I use QuickCheck's \verb+Test.QuickCheck.Gen+ module.
+The generation is fairly straightforward, except that the generated programs
+need to be correct for some of the tests to make sense.  To ensure correctness,
+the generator keeps a environment like in the interpreter (but simpler), so that
+it always knows which shapes it can move, etc.
+
+Creating a program string from an AST is straightforward, though it's important
+to remember that the left associativity in \verb+Expr '-' Prim+ might make it
+necessary to put parantheses around an expression.  There are infinitely many
+correct program texts matching a single AST because expressions can be in
+arbitrarily many parentheses, and because there can be arbitrarily many
+whitespace characters.  My random program string generator uses this to create
+strings with few or many spaces, parentheses and brackets, so that the parser
+can be fed differently formatted versions of the same program.
+
+
+\newpage
+\appendix
+\section{Source Code}
+
+\input{sourcecode}
+
+\end{document}

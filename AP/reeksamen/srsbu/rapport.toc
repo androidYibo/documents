@@ -1,0 +1,22 @@
+\contentsline {section}{\numberline {1}Eddy Parser}{1}
+\contentsline {subsection}{\numberline {1.1}Parser choice}{1}
+\contentsline {subsubsection}{\numberline {1.1.1}Ident}{1}
+\contentsline {subsubsection}{\numberline {1.1.2}charN}{1}
+\contentsline {subsubsection}{\numberline {1.1.3}Integer}{1}
+\contentsline {subsubsection}{\numberline {1.1.4}commandTerm}{1}
+\contentsline {subsection}{\numberline {1.2}Grammar}{1}
+\contentsline {subsubsection}{\numberline {1.2.1}Command}{1}
+\contentsline {subsection}{\numberline {1.3}Testing}{1}
+\contentsline {section}{\numberline {2}Eddy Interpreter}{2}
+\contentsline {section}{\numberline {3}Pubsub}{2}
+\contentsline {subsection}{\numberline {3.1}Implementation}{2}
+\contentsline {subsubsection}{\numberline {3.1.1}Node}{2}
+\contentsline {subsubsection}{\numberline {3.1.2}The Error list}{2}
+\contentsline {subsubsection}{\numberline {3.1.3}Classes of Mistakes}{2}
+\contentsline {subsubsection}{\numberline {3.1.4}Subscribtion loops}{2}
+\contentsline {subsection}{\numberline {3.2}Testing}{3}
+\contentsline {subsection}{\numberline {3.3}Evaluation}{3}
+\contentsline {section}{\numberline {4}Appendix}{4}
+\contentsline {subsection}{\numberline {4.1}Appendix A: Parser}{4}
+\contentsline {subsection}{\numberline {4.2}Appendix B: Interpreter}{7}
+\contentsline {subsection}{\numberline {4.3}Appendix C: Pubsubscriber}{12}

@@ -1,0 +1,210 @@
+\documentclass{article}
+
+% \usepackage[utf8]{inputenc} %Stationær ÆØÅ
+\usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
+
+%\usepackage{url} % Allows hyperlinks
+\usepackage{minted}
+\usepackage[hyphens]{url} %URLs
+\usepackage{graphicx} % Allows figures
+\usepackage{etoolbox} %for configuration of sloppy
+\usepackage{tabularx}
+%Section style
+\usepackage{xcolor}
+
+
+\definecolor{secnum}{RGB}{102,102,102}
+
+\makeatletter
+    \def\@seccntformat#1{\llap{\color{secnum}\csname the#1\endcsname\hskip 16pt}}
+\makeatother
+%end section style
+
+{\sloppy}{\hbadness 10000\relax}{}{} %adds hbadness to sloppy
+\setlength{\paperheight}{297mm} %Sets the page to an A4
+\setlength{\paperwidth}{210mm}        %Sets the page to an A4
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\textsc{\Large Advanced Programming}\\[0.5cm]
+\textsc{Reexam: EddyCommand and Pubsubscriber}\\[0.5cm]
+\vspace{2 cm}
+\begin{tabular}{ll}
+Kasper Passov & pvx884\\
+\end{tabular}
+\end{center}
+\vspace{5 cm}
+\newpage
+\tableofcontents
+\end{titlepage}
+
+\section{Eddy Parser}
+
+\subsection{Parser choice}
+
+I chose to use the ReadP parser as i am most comfortable with it
+and i find the function munch very usefull, with the SimpleParser
+does not have.  
+
+\subsubsection{Ident}
+
+To ensure there are at least one character in the ident i 
+made a helper function contains String -> String -> Bool,
+that checks if the two lists has an element in common.
+
+\subsubsection{charN}
+
+charN allows any of the first 256 characters of the 
+Unicode character set into the insert, and consumes 
+characters until the length described by i is hit. 
+
+\subsubsection{Integer}
+
+I made sure to return the integer as an integer and not
+a string, so it could easily be read by charN
+
+\subsubsection{commandTerm}
+
+i moved repeat to its own Nonterminal as describer by the grammar.
+the rest of the Terminals are unambiguous and without precedence
+and can as such be put into one Nonterminal. 
+
+\subsection{Grammar}
+
+A welldefined grammar is not left-recursive and upholds
+operator precedence. 
+I have made some leftfactorication to the given grammar to
+remove the left recursion of command. The only operatorions that
+calls for precedense is the commands macro and repeat, and the given 
+grammar upholds the precendese.    
+
+\subsubsection{Command}
+
+        The command rule repeat has to be leftfactorized as 
+        repeat is left-recursive.
+        I have removed the left recursion by changing the grammar
+        of command to the following:
+
+            % Command ::= commandT * i repeat'
+                      % | commandT
+
+            % Repeat' ::= '*' i
+                      % | ephsilon  
+                   
+            % CommandT ::= insert
+                       % | del 
+                       % | next
+                       % | prev
+                       % | buffer Ident 
+                       % | remove
+                       % | macro Ident '{' Script '}'
+                       % | Ident
+
+        % REASON FOR THE GRAMMAR TO LOOK LIKE THIS "USING HASKELL PARSER blablabla" 
+
+        % THE GRAMMAR IS NOT CONTEXT FREE
+
+\subsection{Testing}
+    
+    With an unambiguous grammar parsing scripts will be deterministic.
+
+\section{Eddy Interpreter}
+
+\section{Pubsub}
+
+\subsection{Implementation}
+
+I chose not to use OTP as i fell more comfortable building the server
+myself, where there are as little hiden code as possible. I realise
+this creates uglier and more code, but i generaly fell the quality
+of my implementation is improved by this choice.
+
+\subsubsection{Node}
+
+Ones startet, each node in the network has 3 empty lists of tuples. 
+The first saves the nodes subs in tuples of process ids and filters 
+[{S, F}]. This is done so the node can find and access each 
+subscriber and the filter for that subscriber. 
+The second list of tuples is a list of messages this node has 
+recieved, and the uniqe id of that message [{E, Ref]}. 
+The last list of tuples contains and the process that cast the error [{E, S}].  
+
+\subsubsection{The Error list}
+
+The error list is populated when a filter fails on some input. This
+is firstof to uphold the robustness of the network so a filter throwing an
+error does not halt the network. Secondly it is saved so the users or adminstrators
+have some way of discovering why the nodes does not send the
+messages to the subscribers. For this i extended the API to contain
+an errors/1 function that takes a process id and returns that nodes
+list of filter errors.
+
+\subsubsection{Classes of Mistakes}
+
+The helper function tryFilter/4 is called when a node recieves a 
+message and all subscribers Filter functions are to called on 
+it. The helperfunction tries to run the filter on the element
+and returns the filters response if its returntype is a boolean.
+If the filter function throws some kind of error it is caught
+by the filters try/catch, the second type of bad filter i could
+think of, is one where the filter succeds, but does not return
+a boolean. In this case i have chosen to return false and inform
+the node of the filter not returning as expected.
+So the classes of mistakes the implementation can handle, is the
+filter throwing exceptions and type errors.
+One type of filter error i do not catch is that of a filter 
+function that creates an infinite loop. In such a case the
+node will break as it does not know it is in an infinite loop
+and it waits for it to return. 
+
+\subsubsection{Subscribtion loops}
+
+One potential weakness of the network is nodes subscribers creating
+loops between them. This could potentialy create infinite loops
+where a message is bounced between a number of subscribers when 
+filters does not stop the message. The implementation of my
+network stops this by binding an uniqe reference to every message. 
+Everytime a node recieves a message, it checks its message list
+of any references equal to that recieved. If one of those is found
+the message is not forwarded or saved.
+Assuming erlang:make\_ref() (practicaly) creates an uniqe id, an already
+send message should never be saved or resend. This solution means
+it is possible to publish identical messages throughout the sytem
+without the messages being stopped, as all new messages have a new
+identifier. make\_ref recycles ids after 2\^82 calls, meaning there
+are some posibility that a messages will be lost if enough messages
+is called. This number is large enough for it to be unique enough
+for practical purposes, if not in theory.
+
+\subsection{Testing}
+
+I use the lightweight testing framework EUnit to test my erlang 
+implementation, and the analysing tool dialyzer. Dialyzer throws
+passes it with no warnings. I have made 8 manual tests for EUnit
+that can be run with pubsub:test(), this tests the general
+functionality of the API, and everything seams to work as expected.
+The demonstration asked for in the assignment can be run using pubsub:demonstration().
+
+\subsection{Evaluation}
+
+I belive this to be the best part of my solutions, blabla
+
+
+\newpage
+\section{Appendix}
+
+\subsection{Appendix A: Parser}
+\inputminted{haskell}{eddy/EddyParser.hs}
+
+\newpage
+\subsection{Appendix B: Interpreter}
+\inputminted{haskell}{eddy/EddyInterp.hs}
+
+\newpage
+\subsection{Appendix C: Pubsubscriber}
+\inputminted{haskell}{pubsub/pubsub.erl}
+
+\end{document}
+

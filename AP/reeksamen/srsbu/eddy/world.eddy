@@ -1,0 +1,8 @@
+buffer myworld
+i 2|to
+i 2|my
+i 6|World!
+prev
+i 25|wonderful, yet terrifyingmacro top {prev * 5000 * 2}
+top
+i 7|Welcome

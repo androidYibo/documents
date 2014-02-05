@@ -1,0 +1,389 @@
+\documentclass{article}
+
+% \usepackage[utf8]{inputenc} %Stationær ÆØÅ
+\usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
+
+%\usepackage{url} % Allows hyperlinks
+\usepackage{minted}
+\usepackage[hyphens]{url} %URLs
+\usepackage{graphicx} % Allows figures
+\usepackage{etoolbox} %for configuration of sloppy
+\usepackage{tabularx}
+%Section style
+\usepackage{xcolor}
+
+
+\definecolor{secnum}{RGB}{102,102,102}
+
+\makeatletter
+    \def\@seccntformat#1{\llap{\color{secnum}\csname the#1\endcsname\hskip 16pt}}
+\makeatother
+%end section style
+
+{\sloppy}{\hbadness 10000\relax}{}{} %adds hbadness to sloppy
+\setlength{\paperheight}{297mm} %Sets the page to an A4
+\setlength{\paperwidth}{210mm}        %Sets the page to an A4
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\textsc{\Large Advanced Programming}\\[0.5cm]
+\textsc{Reexam: EddyCommand and Pubsubscriber}\\[0.5cm]
+\vspace{2 cm}
+\begin{tabular}{ll}
+Kasper Passov & pvx884\\
+\end{tabular}
+\end{center}
+\vspace{5 cm}
+\newpage
+\tableofcontents
+\end{titlepage}
+
+\section{Eddy Parser}
+
+\subsection{Grammar}
+
+A welldefined grammar is not left-recursive and upholds
+operator precedence. 
+I have made some leftfactorication to the given grammar to
+remove the left recursion of command. The only operatorions that
+calls for precedense is the commands macro and repeat, and the given 
+grammar upholds the precendese.    
+
+\subsubsection{Changes}
+
+The command rule repeat has to be leftfactorized as 
+repeat is left-recursive.
+I have removed the left recursion by changing the grammar
+of command giving the new grammar:
+
+\begin{verbatim}
+Script ::= Commands
+
+Commands ::= Command Commands
+           | epsilon
+
+Command ::= CommandT * i Repeat'
+          | CommandT
+
+Repeat' ::= '*' i Repeat'
+          | epsilon  
+       
+CommandT ::= insert
+           | del 
+           | next
+           | prev
+           | buffer Ident 
+           | remove
+           | macro Ident '{' Script '}'
+           | Ident
+\end{verbatim}
+
+\subsection{Parser choice}
+
+I chose to use the ReadP parser as i am most comfortable with it
+and i find the function munch very usefull, with the SimpleParser
+does not have.  
+
+\subsubsection{Ident}
+
+To ensure there are at least one character in the ident i 
+made a helper function contains String -> String -> Bool,
+that checks if the two strings has one element in common.
+\begin{minted}{haskell}
+ident = do skipSpaces
+           cs <- munch(`elem` allowed)  
+           if checkIdents cs && contains cs (['a'..'z']++['A'..'Z'])
+              ...
+        where allowed = ['a'..'z']++['A'..'Z']++['0'..'9']++"_./*?"
+              checkIdents s = s `notElem` reservedKeywords 
+\end{minted}
+\subsubsection{charN}
+
+charN allows any of the first 256 characters of the 
+Unicode character set into the insert, and consumes 
+characters until the length described by i is hit. 
+
+\subsubsection{Integer}
+
+I made sure to return the integer as an integer and not
+a string, so it could easily be read by charN
+
+\subsubsection{commandTerm}
+
+i moved repeat to its own Nonterminal as describer by the grammar.
+the rest of the Terminals are unambiguous and without precedence
+and can as such be put into one Nonterminal. 
+
+\subsubsection{edrepeat}
+
+to ensure a nested repeat is caught and parsed correctly the
+edrepeat function calls itself, and has the possibility to return
+without consuming anything.
+\begin{minted}{haskell}
+edrepeat ct = do skstring "*"
+                 i <- integer
+                 edrepeat $ Repeat i ct -- edrepeat is run agein if we have nested repeats
+             +++ return ct
+\end{minted}
+
+\subsection{Testing}
+   
+The file ParserTest tests the basic functionality of the Parser, with some edgecases put in manualy.
+It is nowhere near complete and i cannot judge the program to be correct on the base of my testing.
+For this i would need some kind of automatet testing. My testing
+works by ziping the parser result of some manualy created test with
+the expected output defined in resultStrings.
+   
+
+\subsection{Assesment}
+
+Based on my very limited testing, i cannot confidently say a lot about
+correctness.
+The Parser is capable of producing useable Abstract
+Syntax Trees and the general cases seams to work, but there 
+proberly excists some edge cases where the parsing is wrong.
+
+
+\section{Eddy Interpreter}
+
+\subsection{EddyState Type and monad}
+
+I included three things in my State. A list of tuple to represent
+the buffers and the name of the buffers. The name of the active
+buffer, and a list of macronames and the matching script.
+I chose to use a list of the form (key, data), so i could use 
+the buildin library funktions for association lists. Macros
+are included at the toplevel of the state to make from accessable
+to all the buffers.
+\begin{minted}{haskell}
+data EddyState = EddyState { buffers :: [(BufferName, Buffer)],
+                             activeBuffer :: BufferName,
+                             macros :: [(MacroName, Script)] }
+                 deriving(Show, Eq)
+
+newtype EddyCommand a = EC { runEddy :: EddyState -> (a, EddyState) }
+\end{minted}
+I allowed EddyCommand to modify all of the context, as
+there are no parts of the EddyState that are static. It was possible
+to create one run that only allows modification on the active buffer
+that could be used by some of the commands, but i decided ageinst it 
+as i belive it would complicate the code to much.
+
+\subsection{Implementation}
+
+Very few parts of the implementation is interesting, as they are 
+implementet as 
+
+\subsubsection{Line Manipulation}
+
+The only interesting part of the line manipulation is the fact
+that the placement of the lines in the first buffer, is reversed.
+So that the head of the list is the last line. So the lists
+\begin{minted}{haskell}
+    (["2","1"],["3"])
+\end{minted}{haskell}
+should create the lines
+\begin{verbatim}
+1
+2
+3
+\end{verbatim}
+With this in mind the rest of the line manipulation is straightforward.
+
+\subsubsection{Buffer Manipulation}
+\paragraph {buffer}
+To change the active buffer the only thing needed is change the
+activeBuffer string in the EddyState.
+If the chosen buffer is not the list of buffers a new one is created.
+\paragraph {remove buffer}
+The function removeBuffer filters out any instances of the buffer by the given
+name (unless it is the *scratch* buffer) and sets the State of the buffers to the
+new list without the removed buffer.
+
+\subsubsection{Macro Functions}
+The interesting part of the macro functions are the addition of an
+already pressent macro.
+This is done by the addMacro function that creates a list of macros
+with all macros with the given name filtered out. The new macro
+is added to this list and set as the new macrolist
+\begin{minted}{haskell}
+addMacro :: MacroName -> Script -> EddyCommand()
+addMacro mn s = do (EddyState b ab ma) <- getState
+                   let newma = filter (\(x,_) -> x /= mn) ma ++ [(mn,s)]
+                   setState (EddyState b ab newma)
+\end{minted}
+
+\subsection{The type Error}
+
+I did not complete this part of the excercise, so as of now it simply
+ignores any command that would create and error. It should however
+be easy to implement it from the current Interpreter as i have
+forwarded every instance that should call an error into the function
+raiseError. The reason for it not being implemented, is me not knowing
+how, and prioritizing implementing the things i do know before learning
+to implement things i do not.
+\begin{minted}{haskell}
+-- raiseError :: Error
+raiseError :: EddyCommand() 
+raiseError = do es <- getState --error goes here 
+                setState es
+\end{minted}
+
+\subsection{Testing}
+
+The only testing done on the Interpreter is by hand in the enviorment.
+So i can saftly say there are a lot of cases that it will fail. But 
+i was able to confirm that there are cases where it returns as expectet.
+The lack of real testing is mainly me trying to build an automatet tester
+via quickcheck,
+but having to throw it away because of time limitations and its current 
+state being without any functionality.
+
+\subsection{Assesment}
+
+The gross lacking of tests make this implementation very shaky.
+I do belive this is implementation can run most wellformed AST's
+given by the parser as I found the basic functionality working. 
+I am basing this on the testing with different Scripts I did in
+the environment, but with no testing framework or even a small
+script with manually writen tests i cannot call it correct.
+
+\section{Pubsub}
+
+\subsection{Implementation}
+
+I chose not to use OTP as i fell more comfortable building the server
+myself, where there are as little hiden code as possible. I realise
+this creates uglier and more code, but I generaly fell the quality
+of my implementation is improved by this choice.
+
+\subsubsection{Node}
+
+Ones startet, each node in the network has 3 empty lists of tuples. 
+The first saves the nodes subs in tuples of process ids and filters 
+[{S, F}]. This is done so the node can find and access each 
+subscriber and the filter for that subscriber. 
+The second list of tuples is a list of messages this node has 
+recieved, and the uniqe id of that message [{E, Ref]}. 
+The last list of tuples contains and the process that cast the error [{E, S}].  
+
+\subsubsection{The Error list}
+
+The error list is populated when a filter fails on some input. This
+is firstof to uphold the robustness of the network so a filter throwing an
+error does not halt the network. Secondly it is saved so the users or adminstrators
+have some way of discovering why the nodes does not send the
+messages to the subscribers. For this I extended the API to contain
+an errors/1 function that takes a process id and returns that nodes
+list of filter errors.
+
+\subsubsection{Classes of Mistakes}
+
+The helper function tryFilter/4 is called when a node recieves a 
+message and all subscribers Filter functions are to called on 
+it. The helperfunction tries to run the filter on the element
+and returns the filters response if its returntype is a boolean.
+If the filter function throws some kind of error it is caught
+by the filters try/catch, the second type of bad filter i could
+think of, is one where the filter succeds, but does not return
+a boolean. In this case i have chosen to return false and inform
+the node of the filter not returning as expected.
+So the classes of mistakes the implementation can handle, is the
+filter throwing exceptions and type errors.
+One type of filter error i do not catch is that of a filter 
+function that creates an infinite loop. In such a case the
+node will be stuch as it does not know it is in an infinite loop
+and it waits for it to return. 
+Unfortuantly I though of this problem to late for me to implement the solution
+The solution i would have used for this, would be some kind of 
+timeout running parallel with the filter function, that after a 
+certain amount of time sends a halt messages, that forces the
+node to treat the filterfunction as if it returned false. 
+
+\subsubsection{Subscribtion loops}
+
+One potential weakness of the network is nodes subscribers creating
+loops between them. This could potentialy create infinite loops
+where a message is bounced between a number of subscribers when 
+filters does not stop the message. The implementation of my
+network stops this by binding an uniqe reference to every message. 
+Everytime a node recieves a message, it checks its message list
+of any references equal to that recieved. If one of those is found
+the message is not forwarded or saved.
+Assuming erlang:make\_ref() (practicaly) creates an uniqe id, an already
+send message should never be saved or resend. This solution means
+it is possible to publish identical messages throughout the sytem
+without the messages being stopped, as all new messages have a new
+identifier. make\_ref recycles ids after 2\^82 calls, meaning there
+are some posibility that a messages will be lost if enough messages
+is called. This number is large enough for it to be unique enough
+for practical purposes, if not in theory.
+
+\subsection{Testing}
+
+I use the lightweight testing framework EUnit to test my erlang 
+implementation, and the analysing tool dialyzer. Dialyzer throws
+passes it with no warnings. I have made 8 manual tests for EUnit
+that can be run with pubsub:test(), this tests the general
+functionality of the API, and everything seams to work as expected.
+The demonstration asked for in the assignment can be run using pubsub:demonstration()
+and returns
+\begin{minted}{bash}
+2>pubsub:demonstration().
+{[emc2,"Hello",{tick,tock}],["Hello",4]}
+\end{minted}
+
+\subsection{Assesment}
+
+I belive this to be the best of my solutions. I cannot
+say the implementation is correct.
+as i have made no automatic testing for testing larger
+system with a large amount of messages. This could mean
+there are critical flaws in the system i have not seen
+or accountet for. The one i do know is pressent is the
+looping filter function that can shut down the network.
+But this problem i belive can be patched in version 0.2.
+Overall i belive a fix to the known problem and more thorough 
+testing is needed for me to satistied with my solution of 
+this pubsub server. I do it could be deployed with some
+monitoring, as my tests shows the API seams to implemented
+and return values correctly.
+
+\section{General Assesment}
+
+Based on my lacking tests of the Parser and the practicly untested
+interpreter, the theme of this rapport is me saying very little on 
+the correctness of the Eddy implementation. My assesments
+of the individual parts of the assignment is as follows:
+\begin{itemize}
+    \item{Parser} Medium: It seams to work and parse as describer by the assignment, but it lacks testing.
+    \item{Interpreter} Low: \emph{Very} limited testing, a non excisting error handling, and a weak grasp of user defined monads.
+    \item{Erland} Medium-High: The best testing of the 3, but still insificant. 
+\end{itemize}
+Overall i belive this to be an average implementation, and a weak testing, but it does show some insight into the workings of Haskell and Erlang.
+
+\newpage
+\section{Appendix}
+\subsection*{EddyAst.hs}
+\inputminted{haskell}{eddy/EddyAst.hs}
+
+\newpage
+\subsection*{EddyParser.hs}
+\inputminted{haskell}{eddy/EddyParser.hs}
+
+\newpage
+\subsubsection*{ParserTest.hs}
+\inputminted{haskell}{eddy/ParserTest.hs}
+
+\newpage
+\subsection*{EddyInterp.hs}
+\inputminted{haskell}{eddy/EddyInterp.hs}
+
+\newpage
+\subsection*{pubsub.erl}
+\inputminted{erlang}{pubsub/pubsub.erl}
+
+\end{document}
+
