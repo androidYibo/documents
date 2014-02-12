@@ -1,0 +1,62 @@
+1-2 er Produkt ejere
+1-2 er SCRUM masters
+2-4 er developers 
+
+part 1: (10 min) (skriv og estimer)
+
+Product owners: ensætnings specifikationer til features på et kort (en story), lav 6-10 af sådan kort
+Scrum: sørger for kortene indeholder features der kan tegnes og som ikke er alt for åben til fortolkning
+Developers: Får kort fra SCRUMS, og skriver et tidsestimat (hvor længe det tager at tegne denne feature)
+
+Developers må gerne spørge uddybende spørgsmål til produkt ejere
+Scrum mastere sørger for Produkt ejere ikke laver tidsestimater, og Developers ikke laver laver specifikationer
+
+slutning af part1:
+6-10 kort med features og et tidsestimat
+
+
+part 2: (5 min) (planlæg og beslut)
+
+Developer beslutter sig for hvor mange effektive minutter de kan produsere på 10 min (mindre end 10)
+Produkt owners finder de kort de gerne vil have udviklet
+Scrum master sørger for summen af kort ikke overskrider developers effektive minutsætning
+
+
+part 3: (10 min) (byg)
+
+Developers tager ET kort og tegner kaffemaskinen ud fra dette. Tager derefter et til og gentegner kaffemaskinen
+på det samme kort, dette gøres indtil tiden løber ud. Kort tegnes uafhængigt af hinanden.
+
+Scrum Masteren sørger for developers tager kortene en af gangen og uafhængigt.
+
+Developers må gerne spørge ind til produktejere om uddybning, eller accept hvor nødvendigt/passende.
+
+part 4: (5 min) (reflektion)
+
+produktejere må skrive flere "stories" og få dem estimeret af developers
+og et nyt sæt kort til developers
+
+part 5: (10 min) (byg)
+
+Fortsæt arbejdet på den forige maskine.
+Skulle gerne ende med en kaffemaskine der kan gøre produktejeren tilfreds 
+
+
+
+
+
+
+
+
+
+
+
+
+
+Application vs User domain at 2.3.5
+
+application = all aspects of the users problem
+solution    = 
+
+
+

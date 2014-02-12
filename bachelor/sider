@@ -1,0 +1,21 @@
+implementingquantlib.blogspot
+git paulrzcz/hquantlib
+
+
+https://webprint.science.ku.dk/ 
+
+
+problemformulering
+
+I want to design and develop a Haskell library for quantitative finance, taking the open
+source quantlib as a starting point. The laungage Haskell is used
+because of its purity and advanced type class system which allows to model
+relevant entities. The result of my project should be a software 
+architecture that supports different kinds of financial instruments and
+valuation methods.
+
+
+
+
+
+

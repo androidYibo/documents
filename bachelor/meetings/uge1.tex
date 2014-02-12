@@ -1,0 +1,54 @@
+\documentclass{article}
+
+% \usepackage[utf8]{inputenc} %Stationær ÆØÅ
+\usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
+
+%\usepackage{url} % Allows hyperlinks
+\usepackage{minted}
+\usepackage[hyphens]{url} %URLs
+\usepackage{graphicx} % Allows figures
+\usepackage{etoolbox} %for configuration of sloppy
+\usepackage{tabularx}
+\usepackage{pgfgantt}
+%Section style
+\usepackage{xcolor}
+
+
+\definecolor{secnum}{RGB}{102,102,102}
+
+\makeatletter
+    \def\@seccntformat#1{\llap{\color{secnum}\csname the#1\endcsname\hskip 16pt}}
+\makeatother
+%end section style
+
+{\sloppy}{\hbadness 10000\relax}{}{} %adds hbadness to sloppy
+\setlength{\paperheight}{297mm} %Sets the page to an A4
+\setlength{\paperwidth}{210mm}        %Sets the page to an A4
+
+\begin{document}
+
+\begin{center}
+\section*{Agenda for Haskell QuantLib 14/2/14}
+\end{center}
+\begin{itemize}
+\item{Project Constraints}
+    \begin{itemize}
+        \item{\textbf{HQL or QuantLib:}} Which one to base the code on?
+        \item{\textbf{Project goal:}} Exact project goal
+    \end{itemize}
+\item{Synopsis so far}
+    \begin{itemize}
+        \item{\textbf{Project Title:}} HQL? is that cheating?
+        \item{\textbf{Problem Definition:}} Is this still acceptable? 
+        \item{\textbf{Project Justification:}} Is this ok? and do I need more justification?
+        \item{\textbf{Time Schedule:}} Ugly graphichs asside, is this acceptable?
+        \item{\textbf{Bibliography:}} What extra information is needed on HQL and QuantLib?
+    \end{itemize}
+\end{itemize}
+
+
+\newpage
+\input{../rapport/Synopsis.tex}
+
+\end{document}
+

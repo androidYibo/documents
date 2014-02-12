@@ -1,0 +1,40 @@
+Intro:
+
+Kasper
+Hold struktur og mulighed for at skrifte hvis der bliver lavet grupper på tværs
+
+Kurset forløb og kontekst
+
+    Teori i en blok
+    Omkring midten af Marts skal vi have projekter
+    Implementering og udnyttelse af teorien i blok 4,
+        instruktortimer bliver til vejledning 
+   
+    Praktiske workshops: 
+        Grundlæggende(HTML CSS JS) webprogrammering om 14 dage, 
+        hvordan alting hænger sammen samt intruduktion til git og 
+        versionsstyring
+
+
+Modelringsområde = problemområde = solution domain
+
+andvendelsesområde > modelringsområde
+
+1 > 3 > 2 (funktionele krav)
+
+problemområde er hvad modeleres
+andvendelsesområde er den del af verdenen der skal benytte systemet
+
+
+Start med noget interesant selv, "har aldrig oploadet noget på nettet"
+5 hiv det interesante ud og lav en matrix ud fra det
+
+
+
+
+
+
+
+1.1
+    at beskrive og forstå komplekse systemer. Med en model kan vi beskrive
+    systemer som er for store til at håndtere i 
