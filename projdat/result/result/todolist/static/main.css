@@ -1,0 +1,12 @@
+a:link, a:visited, a:active {
+	text-decoration:none;
+}
+
+a.todo_item a {
+	color: blue;
+}
+
+a.pressed a {
+	color: green;
+}
+

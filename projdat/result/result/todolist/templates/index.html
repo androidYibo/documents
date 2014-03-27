@@ -1,0 +1,35 @@
+<html>
+	<head>
+		{% load staticfiles %}
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<link href={% static "main.css"%} rel="stylesheet" type="text/css" media="all"/>
+		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script src={% static "main.js"%}></script>
+	</head>
+	<body>
+		<div id="header">
+			<h3>TODO-list</h3>
+		</div>
+		<div id="content">
+			<ul class="todo_list" id="list_todo">
+        {% for item in todo_items %}
+        <li class="todo_item {% if item.pressed %}pressed{% endif %}">
+          <a href={% url "toggle_item_pressed" item_id=item.id %}>{{ item.task }}</a>
+          <a href={% url "delete_item" item_id=item.id %}>Delete</a>
+				</li>
+				{% endfor %}
+			</ul>
+			<form method="POST" action={% url "add_item" %}>
+				{% csrf_token %}
+				<input type="text" id="input_todo" name="new_task">
+				</input>
+				</br>
+				<input type="submit" id="button_todo" value="Create item">
+				</input>
+			</form>
+		</div>
+		<div id="footer">
+		</div>
+	</body>
+</html>
+
