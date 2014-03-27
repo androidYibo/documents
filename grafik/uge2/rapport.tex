@@ -2,6 +2,7 @@
 
 \usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
 
+\usepackage{amsmath}
 \usepackage{minted}
 \usepackage{graphicx} % Allows figures
 \usepackage{tabularx}
@@ -26,7 +27,7 @@
 \begin{titlepage}
 \begin{center}
 \textsc{Introduction to Graphics}\\[0.5cm]
-\textsc{Assignment 1: Scanconversion of lines}\\[0.5cm]
+\textsc{Assignment 2: Geometriske Transformationer}\\[0.5cm]
 \vspace{2 cm}
 \begin{tabular}{ll}
 Student: & Kasper Passov\\
@@ -37,229 +38,155 @@ Student: & Kasper Passov\\
 \end{titlepage}
 
 \section{Problem description}
-We wish to construct an algorithm that draws a line of pixels from
-point $(x1,y1)$ to $(x2,y2)$. Unfortuantly the optimal line between
-these points does not always go through grid vertex's.
-To combat this we design this algorithm to pick the points closest to
-the optimal line.
 
-\section{Algorithm description}
+% \subsection{Problem description (religious)}
+% On the first day, The Helix created the triangle. The great Helix
+% placed the triangle in a box of darkness and democrazy. The great one
+% saw this would not do, and therefore functions was needed to absolve
+% the triangle from it's way of heresy and bring it into anarchy.
+% This would need the great function trinity. Translocation, Scalation
+% and Rotation. With these holy three, and the unholy one shear, the
+% triangle would be able to free itself from the tyrany of democrazy
+% and into the great ones way of anarchy.
 
-The algorithm creates a new point $d$ on the following column, halfway 
-between the two pixels. The two pixels are called $\Delta E$ (The eastern one)
-and $\Delta NE$ (the northeasteren one). To calculate the following point,
-the line is compared to $d$, if $d$ is smaller the correct pixel is the northeastern
-one, otherwise the eastern one is picked. This is then done until the of the line is
-reached.
-
-\subsection{Algorithm edgecases}
-
-We have some different edgecases we have to keep in
-mind while implementing the algorithm:
-
-\begin{itemize}
-    \item{Slope above 1}
-    \item{Slope below 0}
-    \item{x2 larger then x1} 
-\end{itemize}
-
-These 3 edgecases gives us a total of 8 diffrent lines that needs
-to be handled.
-
-\subsubsection{Slope above 1} This type of line I will call $y$-dominant.
-It is a problem as the base algorithm always will increment the 
-$x$ value, which is not correct when we have a slope above one.
-It can be handlede by flipping the $x$ and $y$ coordinates of both points,
-in the algorithm, while not flipping them when drawing the pixels. 
-This makes the algorithm calculate the line from the perspective
-of $y$ instead of $x$, and because $x$ has a slope above 1, $y$ will not
-
-\begin{minted}{cpp}
-void FltkDevice::DrawLine(int xstart, int ystart, 
-                          int xend, int yend) {
-    ...
-    if (ydom) { //checks if y is dominat and flip values if it is
-        this->DrawLineHelper(dy, dx, ystart, xstart, yend, ydom);}
-    else {
-        this->DrawLineHelper(dx, dy, xstart, ystart, xend, ydom);}
+\subsection{Problem description}
+We want functions that enable us to transform triangles, so that
+any triangle can be transformed into any other triangle.
 
 
-void FltkDevice::DrawLineHelper(int dx,  int dy, int x,   int y, 
-                                int end, bool ydom) {
-        ...
-        if(ydom) {SetPixel(y, x, 0);} //draws ydominant pixel
-            else {SetPixel(x, y, 0);}
-\end{minted}
+\subsection{Scale}
 
-\subsubsection{Slope below 0} For this to work I need to pick the
-Southeastern pixel instead of the Northeastern, I need to
-decrement $y$ instead of incrementing it and when we check 0 
-ageinst $d$ I have to keep in mind $\Delta SE$ should be lower then $\Delta E$. 
+Scaling enables us to grow and shrink the triangle, whithout 
+modifying the sides ratio. 
+This is done using matrix transformations with the vector equation\\
+$
+\begin{bmatrix}
+xnew \\
+ynew
+\end{bmatrix} = 
+\begin{bmatrix} s_{x} & 0 \\ 0 & s_{y} \end{bmatrix} 
+\begin{bmatrix} xorg \\ yorg \end{bmatrix}
+$\\
+This is just multiplying the scale factor with the position.
 
-\begin{minted}{cpp}
-void fltkdevice::drawlinehelper(int dx,  int dy, int x, int y, 
-                                int end, bool ydom, bool yneg) {
-    ...
-    if (not yneg) {
-        dNE = 2 * (dy - dx); //dNE
-        dE  = 2 * dy;
-        }
-    else {
-        ...
-        % else {
-            dNE = 2 * (dx - dy); //dSE
-            dE  = 2 * dy;
-        }
-    ...
-    if (yneg){checkd = (d <= 0);} // Difference between NE and SE calculations
-        else {checkd = (d >  0);}
-\end{minted}
-Another problem emerges when we have a slope below -1. When my 
-current implementation solves the problem of a slope below 0,
-it flips the line upside down and uses the algorithm on the now
-positive slope. This gives us the self contradicting second 
-problem of having to deal with a slope that is both below 0 
-and above 1. To deal with this i made a small change to the
-wrapper function that deals with the y domination problems,
-so that the $x$ and $y$ are not switched. 
-\begin{minted}{cpp}
-void FltkDevice::DrawLine(int xstart, int ystart, 
-                          int xend, int yend) {
-    ...
-    if (ydom) { //checks if y is dominat and flip values if it is
-        if (yneg) {
-            int t = yend;
-            yend = ystart;
-            ystart = t;
-            t = xend;
-            xend = xstart;
-            xstart = t;
-            }
-        this->DrawLineHelper(dy, dx, ystart, xstart, yend, ydom, yneg);}
-    else {
-        this->DrawLineHelper(dx, dy, xstart, ystart, xend, ydom, yneg);}
-\end{minted}
+\subsection{Rotate}
 
-\subsubsection{Negative $\Delta x$}
-With a negative delta value our algorithm would have to draw from
-right to left, using dW and dSW. Instead of implementing this
-i used my wrapperfunction to detect this problem by comparing
-$xstart$ and $xend$, and if found swap the my start and end position.
-\begin{minted}{cpp}
-    bool xneg = xstart > xend;
+Rotation is found by the vector equation\\
+$
+\begin{bmatrix} xnew \\ ynew \end{bmatrix} =
+\begin{bmatrix} cos_{\Theta} & -sin_{\Theta} \\ sin{\Theta} & cos_{\Theta} \end{bmatrix} 
+\begin{bmatrix} xorg \\ yorg \end{bmatrix}
+$\\
+\subsection{Translocation}
 
-    if (xneg) { int t = xstart; xstart = xend; xend = t;
-                    t = ystart; ystart = yend; yend = t;}
-\end{minted}
+\subsubsection{Homogen coordinates}
+The problem with the simple implementation of translocation is
+it uses addition, where the other transformations uses multiplication.
+This mean we would have to create speciel cases to handle translocation,
+which is not an attractive attribute. 
+For this we use Homogeneous Coordinates which is has one ekstra dimension. 
+
+\subsubsection{Translocate transformation}
+Translocation under Homogen coordinates is done by\\
+$\begin{bmatrix} wxnew \\ wynew \\ w \end{bmatrix} =
+\begin{bmatrix} 1 & 0 & d_{x} \\ sin{\Theta} & cos_{\Theta} \end{bmatrix} 
+\begin{bmatrix} xorg \\ yorg \end{bmatrix}$
 
 \section{Implementation}
+I used the zipped skeleton \emph{skeletet til geometriske transformationer},
+that i made work with a magic makefile i found on the forum.\\
+In the skeleton i created a function that observes keystrokes, and
+runs glm transformations based on the keystroke. This means i am
+using the skeletons glm::(scale, rotate and translate) functions
+instead of implementing my own.
 
+\subsection{Comments on implementation}
+
+I used the glm::(transformations) to do the transformations needed.
+Furthermore i created an observer that checks for keystrokes. On each of these
+keystrokes it does one of the following actions:
+\begin{itemize}
+    \item{a:} Scales the triangle up 
+    \item{q:} Scales the triangle down
+    \item{s:} Rotates the triangle clockwise
+    \item{w:} Rotates the triangle counterclockwise
+    \item{j:} Translocate the triangle left
+    \item{l:} Translocate the triangle right 
+    \item{i:} Translocate the triangle up
+    \item{k:} Translocate the triangle down 
+\end{itemize}
+using the fitting glm::(transformation).
+
+\subsection{The implementation}
 \begin{minted}{cpp}
-void FltkDevice::DrawLine(int xstart, int ystart, 
-                          int xend, int yend) {
-    bool xneg = xstart > xend;
+static void processNormalKey(unsigned char key, int x, int y) {
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    if (xneg) { int t = xstart; xstart = xend; xend = t;
-                    t = ystart; ystart = yend; yend = t;}
+	triangleShaderProgram.useProgram();
 
-    bool yneg = ystart > yend;
-    int dx  = xend - xstart;
-    int dy  = yend - ystart;
+	glUniformMatrix4fv(glGetUniformLocation(triangleShaderProgram.getProgram(), "uModelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
-    bool ydom = std::abs(dy) > std::abs(dx);
-     
-    if (ydom) { //checks if y is dominat and flip values if it is
-        if (yneg) {
-            int t = yend;
-            yend = ystart;
-            ystart = t;
-            t = xend;
-            xend = xstart;
-            xstart = t;
-            }
-        this->DrawLineHelper(dy, dx, ystart, xstart, yend, ydom, yneg);}
-    else {
-        this->DrawLineHelper(dx, dy, xstart, ystart, xend, ydom, yneg);}
+    modelMatrix = callWithKey(key);
+
+	triangle.draw();
+    glutSwapBuffers();
 }
 
+static void renderSceneCB() {
+    glClear(GL_COLOR_BUFFER_BIT);
 
-void FltkDevice::DrawLineHelper(int dx,  int dy, int x, int y, 
-                                int end, bool ydom, bool yneg) {
-    int dNE,dE;
-    bool checkd;
-    int d   = 2 * dy - dx;
+	triangleShaderProgram.useProgram();
 
-    if (not yneg) {
-        dNE = 2 * (dy - dx); //dNE
-        dE  = 2 * dy;
-        }
-    else {
-        if (ydom){
-            dNE = 2 * (dy - dx); //dSE
-            dE  = 2 * dx;
-        }
-        else {
-            dNE = 2 * (dx - dy); //dSE
-            dE  = 2 * dy;
-        }
+	glUniformMatrix4fv(glGetUniformLocation(triangleShaderProgram.getProgram(), "uModelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+	glUniform1f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uScale"), 0.25f);
+	glUniform3f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uColour"), 1.0f, 1.0f, 0.4f);
+	triangle.draw();
+
+    glutSwapBuffers();
+}
+
+glm::mat4 callWithKey(unsigned char key) {
+    switch(key) {
+        case 65: case 97: //a scale down 
+            return glm::scale(modelMatrix, glm::vec3(0.9f,0.9f,0.0f));
+            break;
+        case 83: case 115: //s roate neg 
+            return glm::rotate(modelMatrix, -5.0f, glm::vec3(0.2f,0.2f,0.2f));
+            break;
+        case 81: case 113: //q scale up
+            return glm::scale(modelMatrix, glm::vec3(1.1f,1.1f,0.0f));
+            break;
+        case 87: case 119: //w roate pos
+            return glm::rotate(modelMatrix,  5.0f, glm::vec3(0.2f,0.2f,0.2f));
+            break;
+        case 106:  //left j
+            return glm::translate(modelMatrix, glm::vec3(-0.01f,0.0f,0.0f));
+            break;
+        case 105:  //up i
+            return glm::translate(modelMatrix, glm::vec3(0.0f,0.01f,0.0f));
+            break;
+        case 108:  //right l
+            return glm::translate(modelMatrix, glm::vec3(0.01f,0.0f,0.0f));
+            break;
+        case 107:  //down k
+            return glm::translate(modelMatrix, glm::vec3(0.0f,-0.01f,0.0f));
+            break;
+        case 27 : //esc
+            exit(0);
     }
-
-    while (x <= end) {
-        if (ydom){SetPixel(y, x, 0);} // Draws ydominant pixel
-            else {SetPixel(x, y, 0);}
-
-        if (yneg){checkd = (d <= 0);} // Difference between NE and SE calculations
-            else {checkd = (d >  0);}
-
-        if (checkd) {// Pick the NorthEast Cornor
-            if (yneg){ y--;}
-               else  { y++;}
-        d =+ dNE;
-        }
-        else {
-            d = d + dE;
-            }
-        x++;
-        }
-    this->Update();
-    this->UnitLength(this->UnitLength(50));
-}
+    return modelMatrix;
 \end{minted}
-
+\newpage
 \section{Testing}
-The test is generated by the following code:
-\begin{minted}{cpp}
-        this-> TestLine(10,5,13,6, 1.0,0.0,0.0);
-        this-> DrawLine(10,5,13,6);
-        this-> TestLine(9,6,10,9, 1.0,0.0,0.0);
-        this-> DrawLine(9,6,10,9); //red
+I used the given framework implementing the keys describer above. 
+Figure 1 (left), is the triangle before any transformations, Figure 2 (right)
+is after some scaletion, translocation and rotation.\\
 
-        this-> TestLine(10,4,13,3, 0.0,1.0,0.0);
-        this-> DrawLine(10,4,13,3);
-        this-> TestLine(9,3,10,0, 0.0,1.0,0.0);
-        this-> DrawLine(9,3,10,0); //green
-
-        this-> TestLine(7,4,4,3, 1.0,1.0,1.0);
-        this-> DrawLine(7,4,4,3);
-        this-> TestLine(8,3,7,0, 1.0,1.0,1.0);
-        this-> DrawLine(8,3,7,0); //white
-
-        this-> TestLine(7,5,4,6, 0.0,0.0,1.0);
-        this-> DrawLine(7,5,4,6);
-        this-> TestLine(8,6,7,9, 0.0,0.0,1.0);
-        this-> DrawLine(8,6,7,9); //blue
-\end{minted}
-\begin{center}
-    \includegraphics[scale=0.3]{GrafikTest.png}
-\end{center}
-As the graphic shows most of the lines works as inteded. With the
-exceptions of the one with a negative slope (flat green) and its
-sisterline the flat blue. I suspect this error comes from me not
-finding the correct value for $\Delta SE$.
-
-\subsection{Code}
-The code for the implementation can be found in the zipped file
-fltkdotdevice, and can be run with button 2.
+\includegraphics[scale=0.2]{penis1.png}
+\includegraphics[scale=0.2]{penis2.png}\\
+The code has been included in a zipfile and can be run and tried with the commands
+defined in section 3.1. The program can be exited via the \emph{esc} key
 
 \end{document}
 

@@ -1,0 +1,24 @@
+﻿Build started 28-02-2014 15:09:14.
+     1>Project "C:\Users\Mads\Desktop\New folder\Windows\ogldev\Tutorial04.vcxproj" on node 2 (Build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Debug\Tutorial04\Tutorial04.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\Tutorial04\\" /Fd"Debug\Tutorial04\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\tutorial04\GLTriangle.cpp ..\..\tutorial04\ShaderProgram.cpp ..\..\tutorial04\tutorial04.cpp
+         tutorial04.cpp
+     1>c:\users\mads\desktop\new folder\tutorial04\tutorial04.cpp(91): warning C4800: 'const GLboolean' : forcing value to bool 'true' or 'false' (performance warning)
+         ShaderProgram.cpp
+         GLTriangle.cpp
+         Generating Code...
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Mads\Desktop\New folder\Windows\ogldev\Debug\Tutorial04.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\Mads\Desktop\New folder\Windows\ogldev\\..\..\Lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib glew32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Mads\Desktop\New folder\Windows\ogldev\Debug\Tutorial04.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Mads\Desktop\New folder\Windows\ogldev\Debug\Tutorial04.lib" /MACHINE:X86 Debug\Tutorial04\GLTriangle.obj
+         Debug\Tutorial04\ShaderProgram.obj
+         Debug\Tutorial04\tutorial04.obj
+         Tutorial04.vcxproj -> C:\Users\Mads\Desktop\New folder\Windows\ogldev\Debug\Tutorial04.exe
+       FinalizeBuildStatus:
+         Deleting file "Debug\Tutorial04\Tutorial04.unsuccessfulbuild".
+         Touching "Debug\Tutorial04\Tutorial04.lastbuildstate".
+     1>Done Building Project "C:\Users\Mads\Desktop\New folder\Windows\ogldev\Tutorial04.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.04
