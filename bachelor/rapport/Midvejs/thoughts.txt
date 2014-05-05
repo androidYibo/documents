@@ -1,0 +1,16 @@
+In Quantlib an Instrument is described as a base clase that derives the
+specifik instruments. This is done to allow code in the Model 
+that does not specify which kind of instrument we are calculating.
+
+An example of such code could be.
+   for ( i = portfolio.begin ( ) ; i != portfolio.end ( ) ; ++ i )
+      totalNPV += i −> NPV ( ) ; (from QuantLib book chapter 2)
+
+This is a very attractive feature we would like to keep in HQL. 
+(as it has been done in HQL).
+
+
+A VanillaSwap in QuantLib contains a fixed and floating leg. 
+
+
+

@@ -1,0 +1,51 @@
+\documentclass{article}
+
+% \usepackage[utf8]{inputenc} %Stationær ÆØÅ
+\usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
+
+%\usepackage{url} % Allows hyperlinks
+\usepackage{minted}
+\usepackage[hyphens]{url} %URLs
+\usepackage{graphicx} % Allows figures
+\usepackage{etoolbox} %for configuration of sloppy
+\usepackage{tabularx}
+\usepackage{pgfgantt}
+%Section style
+\usepackage{xcolor}
+
+
+\definecolor{secnum}{RGB}{102,102,102}
+
+\makeatletter
+    \def\@seccntformat#1{\llap{\color{secnum}\csname the#1\endcsname\hskip 16pt}}
+\makeatother
+%end section style
+
+{\sloppy}{\hbadness 10000\relax}{}{} %adds hbadness to sloppy
+\setlength{\paperheight}{297mm} %Sets the page to an A4
+\setlength{\paperwidth}{210mm}        %Sets the page to an A4
+
+\begin{document}
+
+\begin{center}
+\section*{Agenda for Haskell QuantLib 3/3/14}
+\end{center}
+\begin{itemize}
+\item{\textbf{Quantlib Structure}}
+    \begin{itemize}
+        \item{What i have:} I'll bring what i have come up with, but it is not digital so i cannot attach it.
+        \item{Trouble finding tools for autogeneration:} I found quite a few tools for creating class diagrams, but no free tools. 
+    \end{itemize}
+\item{\textbf{Time budget}} 
+    \begin{itemize}
+        \item{My schedual and reserved dates:} Generaly when i can work and how much, and your thoughts on it
+        \item{Implementation deadlines:} Trying to set some realistic deadlines for the parts of the implementations 
+    \end{itemize}
+\item{\textbf{Synopsis (if time)}}
+    \begin{itemize}
+        \item{How is the quality of the synopsis?:} General thoughts on the synopsis now that it has been handed in
+    \end{itemize}
+\end{itemize}
+
+\end{document}
+

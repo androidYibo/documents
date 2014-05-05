@@ -1,0 +1,234 @@
+\documentclass{article}
+
+% \usepackage[utf8]{inputenc} %Stationær ÆØÅ
+% \usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
+
+\usepackage{pgfgantt} %Package for gantcharts
+\usepackage{hyperref} % Allows in document hyperrefs
+%\usepackage{url} % Allows hyperlinks
+% \usepackage{minted} % In document sourcecode
+% \usepackage[hyphens]{url} %URLs
+% \usepackage{graphicx} % Allows figures
+\usepackage{etoolbox} %for configuration of sloppy
+% \usepackage{tabularx} %Tabulars
+%Section style
+\usepackage{xcolor}
+
+\definecolor{secnum}{RGB}{102,102,102}
+
+\makeatletter
+    \def\@seccntformat#1{\llap{\color{secnum}\csname the#1\endcsname\hskip 16pt}}
+\makeatother
+%end section style
+
+{\sloppy}{\hbadness 10000\relax}{}{} %adds hbadness to sloppy
+\setlength{\paperheight}{297mm} %Sets the page to an A4
+\setlength{\paperwidth}{210mm}        %Sets the page to an A4
+
+%macros
+\newcommand{\HF}{\texttt{HIPERFIT}}
+\newcommand{\HQL}{\texttt{HQL}}
+\newcommand{\QL}{\texttt{QuantLib}}
+\newcommand{\Cpp}{\texttt{C++}}
+
+
+%Ganttchart
+\definecolor{stblue}{RGB}{0,253,155}
+\definecolor{stred}{RGB}{234,87,0}
+
+\newganttchartelement{stbar}{
+    stbar/.style={ 
+      shape=rounded rectangle,
+      inner sep=0pt,
+      draw=stblue!50!black,
+      very thick,
+      top color=white,
+      bottom color=stblue!50
+    },
+    stbar incomplete/.style={
+        /pgfgantt/stbar,
+        draw=stred,
+        bottom color=stred!50
+    },
+    stbar label font=\slshape,
+    % stbar left shift=-.1,
+    % stbar right shift=.1
+}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+\textsc{\huge Haskell Library for Quantitative Analysis in Finance}\\[0.5cm]
+\textsc{\Large Synopsis}\\[0.5cm]
+\vspace{2 cm}
+\begin{tabular}{ll}
+Student: & Kasper Passov\\
+Supervisors: & Fritz Henglein \\ 
+             & Jost Berthold
+\end{tabular}
+\end{center}
+\vspace{5 cm}
+\newpage
+\tableofcontents
+\end{titlepage}
+
+\section{Project Title}
+Haskell Library for Quantitative Analysis in Finance
+
+\section{Problem Definition}
+
+I want to design and develop a Haskell library for 
+quantitative finance, taking the open source \QL\ 
+as a starting point. The language Haskell is used
+because of its purity and advanced type class system
+which allows it to model relevant entities.\\
+The result of my project should be a software
+architecture that supports different kinds of 
+financial instruments and valuation methods.
+
+\section{Learning Goals}
+The following are the goals i stride to fulfill during this project:
+\begin{itemize}
+    \item {I will be able to work with models of different financial instruments and pricing methods.}
+    \item {I will be able to structure and execute a medium-sized software project in a functional language.}
+    \item {I will be able to implement parts of a medium-sized financial project using Haskell.}
+    \item {I will be able to use advanced Haskell typesystem features.}
+\end{itemize}
+Overall i hope to gain a deeper knowledge of Haskell and functional programmign, an overview of the basic finacial instruments
+and methods and gain experience in structuring and completing a sizeable project.
+
+\section{Project Justification}
+
+\subsection{Justification of a Quantitative Library}
+The field of Quantitative analysis is calling for evermore computational power, to
+do the calculations needed for the exponetialy expanding data volumes, using the 
+computation-intesive methods for complex risk analysis.\\
+The context my project will take base on is the quantitative library \HQL\cite{HQL},
+developed within the \HF\cite{HF} research center, by master students Andreas Bock 
+and Johan Astborg supervised by Jost Berthold and Sinan Gabel. 
+The library is one in a chain of projects made by \HF, striving to develop 
+functional programming solutions desgined for highly parallel computation architectures.
+Making it easier to implement massive parallelization into (among others) financial 
+methods and instruments\cite{FHPH}.
+% with the goal of solving
+% problems of today's computing in finance more efficiently, by creating financial software using
+% functional programming enabling massive amounts of processors to work parallel\cite{FHPH}.
+
+\subsection{Language Justification}
+Andreas Bock and Johan Astborg was given the language Haskell for development of \HQL\cite{HQL},
+(as part of \HF s general goal of creating financialy highlevel functional programing tools\cite{HF}). 
+As my project is based on \HQL, the justification of the language is largely the same, and i will paraphase their reasoning.\\
+The correctness of the program is paramount in the development of a quantitative library, as 
+the finance sector is very suspectible to faulty software, where even small errors
+can lead to large economical damage. Because of this, we wish our language capable
+of catching as many errors as possible in the compilation phase. \\
+In this Haskell excels, as its strict type system eliminates a whole class of bugs in the
+compilation phase. Furthermore Haskell has a number of attractive features making it suited
+for financial calculations, including modularity\cite{WFM}, laziness\cite{Cc}, functionality, purity and type classes.\\
+The purity makes it easier to translate equations into code because of maths inherent purity,
+and as different financial products often shares similar functionality, the functional 
+programming of Haskell enables us to re-use code or create new functionality from existing one.
+Haskell allows overloading functionality based on types using type classes, this is extremely desirable
+as it allows us to have the same API regardless of exact type (e.g. an \texttt{Instrument} can be used abstractly 
+as a parameter, so functions can have different functionality based on the exact instance of \texttt{Instrument}).
+
+\section{Project Specifications}
+The project will be an extension of the Haskell library \HQL, implementing 
+some of the functionality of the \Cpp\ library \QL\cite{QULI}, onto the current system.\\
+The \QL\ library is writen in object oriented programming style (\Cpp) and uses a class system, 
+which is not strictly translateable into the Haskell type class system.
+Haskell type classes ensures that some operations will be availabe for values of chosen types, meaning they are
+more similar to abstract classes with multiple inheritance, such as the \texttt{Java Interface}, 
+than with the actual \Cpp\ classes. \\
+This raises the problem of a class architecture that cannot be directly translatet, as a \Cpp\ class cannot translate
+into a Haskell type class. I will analyse and extract the architecture of \QL\ and redesign it to accomodate
+the new type class system, without removing functionality.\\
+The main milestone of the project is to implement the vanilla swap functionality into the
+current \HQL\ library. This will have several hurdles, as a vanilla swap is a swap of a fixed interest
+rate with a floating rate. At the time of writing, floating interest rate is not implemented in \HQL, so 
+another part of the project would entail the addition of this functionality. \\
+
+\section{Project Limitations}
+As \QL\ is a large library, implementing everything would be a much to large task
+for a bachelor project, meaning only parts of the \QL\ functionality will be added to \HQL.\\
+As statet above, the main milestone of the project is the implementation of vanilla swaps, and
+all dependant functionality. After the milestone is reached, further analysis 
+of \QL\ will be done, resulting in selection and prioritisation of more expansions to the \HQL\ library.
+I will however ignore date calculations in my implementation as this broadens the scope beyond what is 
+possible of this project. 
+
+\section{Schedule}
+
+\begin{figure}[h]
+\hspace{-2.85cm}
+\begin{ganttchart}[
+        y unit title=0.7cm,
+        y unit chart=0.7cm,
+        hgrid=true,
+        vgrid=true,
+        progress=today,
+        progress label text=\relax,
+        today=2]{0}{18}
+    \gantttitle{Week number}{19} \\
+    \gantttitlelist{6,...,24}{1} \\
+    \ganttstbar[bar height=.7]{Reading}{1}{10}\\
+    \ganttstbar[bar height=.7]{Synopsis}{1}{2} \\
+    \ganttmilestone{Synopsis Handin}{2}\\
+    \ganttstbar[bar height=.7]{Implementation}{7}{10}
+    \ganttstbar[bar height=.7]{}{3}{6}
+    \ganttstbar[bar height=.7]{}{13}{14}\\
+    \ganttstbar[bar height=.7]{Testing}{11}{12} \\
+    \ganttmilestone{Midway Report}{10}\\
+    \ganttstbar[bar height=.7]{}{11}{15}
+    \ganttstbar[bar height=.7]{Write Report}{7}{10} \\
+    \ganttstbar[bar height=.7]{Fine tuning}{16}{17} \\
+    \ganttmilestone{Final Report}{17}
+    \ganttlink{elem1}{elem2}
+    \ganttlink{elem2}{elem4}
+    \ganttlink{elem3}{elem6}
+    \ganttlink{elem6}{elem5}
+    \ganttlink{elem9}{elem7}
+    \ganttlink{elem8}{elem10}
+    \ganttlink{elem10}{elem11}
+\end{ganttchart}
+\end{figure}
+\subsection{Description}
+\emph{Synopsis}, \emph{Midway Report} and \emph{Final Report} are the handin deadlines.
+The implementation task will be split up into several subtasks with milestones defined by the project specification. The split in
+implementation is the milestone for the completion of vanilla swap, and from that point the report is possible to write.
+Documentation will happen parallel with the implementation, while testing will happen after, followed by more implementation the testing
+proved faulty. The split in the report is where the midway specifications should be completet.
+\begin{thebibliography}{9}
+\bibitem{OOSE}
+    Bernd Bruegge, Allen H.Dutoit
+    \emph{Object-Oriented Software Engineering Using UML, Patterns and Java},
+    Person New International Edition,
+    Third Edition,
+    2014.
+\bibitem{QULI}
+    Luigi Ballabio
+    \emph{Implementing \QL},
+    Draft,
+    2013.
+\bibitem{HQL}
+    Andreas Bock, johan Astborg, Jost Berthold, Sinan Gabel
+    \emph{HIPERFIT Quant Library},
+    2014.
+\bibitem{WFM}
+    John Hughes, The University Glasgow
+    \emph{Why Functional Programming Matters} 
+    1990.
+\bibitem{Cc}
+    Simon Peyton Jones, Jean-Marc Eber, Julian Seward
+    \emph{Composing contracts: an adventure in financial engineering}
+    2000.
+\bibitem{HF}
+    http://hiperfit.dk/
+\bibitem{FHPH}
+    Jost Berthold, Andrzej Filinski, Fritz Henglein, Ken Friis Larsen, Mogens Steffensen, Brian Vinter
+    \emph{Functional High Performance Financial IT}
+    2012.
+\end{thebibliography}
+\end{document}
+

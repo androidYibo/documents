@@ -4,8 +4,17 @@ LDFLAGS=-L/usr/local/lib -lGL -lGLEW -lglut -lm
 
 all: Run 
 
-GLCurve.o: GLCurve.h GLCurve.cpp
-	g++ ${CXXFLAGS} -c GLCurve.cpp
+# glmutils.o: glmutils.h glmutils.cpp
+	# g++ ${CXXFLAGS} -c glmutils.cpp
+
+# testglm.o: testglm.h testglm.cpp
+	# g++ ${CXXFLAGS} -c testglm.cpp
+
+bezierpatch.o: bezierpatch.h bezierpatch.cpp
+	g++ ${CXXFLAGS} -c bezierpatch.cpp
+
+readbezierpatches.o: readbezierpatches.h readbezierpatches.cpp
+	g++ ${CXXFLAGS} -c readbezierpatches.cpp
 
 ShaderProgram.o: ShaderProgram.h ShaderProgram.cpp
 	g++ ${CXXFLAGS} -c ShaderProgram.cpp
@@ -13,8 +22,14 @@ ShaderProgram.o: ShaderProgram.h ShaderProgram.cpp
 main.o: main.cpp
 	g++ ${CXXFLAGS} -c main.cpp
 
-Run: main.o GLCurve.o ShaderProgram.o
-	g++ ${CXXFLAGS} -o Run GLCurve.o ShaderProgram.o main.o ${LDFLAGS}
+GLPatch.o: GLPatch.h GLPatch.cpp
+	g++ ${CXXFLAGS} -c GLPatch.cpp
+
+# Run: main.o GLPatch.o ShaderProgram.o bezierpatch.o glmutils.o readbezierpatches.o 
+	# g++ ${CXXFLAGS} -o Run GLPatch.o ShaderProgram.o main.o bezierpatch.o glmutils.o ${LDFLAGS}
+
+Run: main.o GLPatch.o ShaderProgram.o bezierpatch.o readbezierpatches.o 
+	g++ ${CXXFLAGS} -o Run GLPatch.o ShaderProgram.o main.o bezierpatch.o readbezierpatches.o ${LDFLAGS}
 
 clean:
 	rm -f Run *.o

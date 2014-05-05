@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include "glm/glm.hpp"
@@ -15,11 +16,13 @@
 #include "glm/gtx/transform2.hpp"
 
 #include "ShaderProgram.h"
-#include "GLCurve.h"
+#include "GLPatch.h"
 
+#define _USE_MATH_DEFINES                                            
 
-
-GLCurve curve;
+GLPatch patch;
+// std::vector<GLPatch> buffers;
+// std::vector<glm::vec3> normals;
 bool hardwareShaderSupport;
 ShaderProgram triangleShaderProgram;
 
@@ -32,7 +35,12 @@ static const std::string sVertexShader = "															  \n\
 					uniform mat4 uModelMatrix;														  \n\
 					uniform mat4 uPerspectiveMatrix;												  \n\
 																									  \n\
+				    varying vec4 vPos;              												  \n\
+				    varying mat4 vMat;              												  \n\
+																									  \n\
 					void main() {                                                                     \n\
+                        vPos = vec4(aPosition.xyz, 1.0);                                              \n\
+                        vMat = uModelMatrix;                                                          \n\
 						gl_Position = uPerspectiveMatrix * uModelMatrix * vec4(aPosition.xyz, 1.0);	  \n\
 					}																				  \n\
 ";
@@ -40,42 +48,59 @@ static const std::string sVertexShader = "															  \n\
 static const std::string sFragmentShader = "														  \n\
 					#version 110																	  \n\
 																									  \n\
-					uniform vec3 uColour;															  \n\
+				    // from code																	  \n\
+					uniform vec4 uAmb, uDif, uSpe, uNormal, uLightPos, uViewPos;	         		  \n\
+				    uniform int un;																	  \n\
+																									  \n\
+				    // from vertexShader															  \n\
+                    varying vec4 vPos;                                                                \n\
+                    varying mat4 vMat;                                                                \n\
 																									  \n\
 					void main()	{																	  \n\
-						gl_FragColor = vec4(uColour, 1.0);											  \n\
+                        vec4 V = normalize(uViewPos * vMat - vPos);                                   \n\
+                        vec4 L = normalize(uLightPos * vMat - vPos);                                  \n\
+                        vec4 R = reflect(-L, uNormal);                                                \n\
+                        gl_FragColor = uAmb + uDif * dot(L, uNormal) + uSpe * pow(dot(R, V), un);     \n\
 					}																				  \n\
 ";
 
-// static void Phong(const glm::vec3& Ia, // vec3 ambient light source(Ired, Igreen, Iblue) 
-                  // const glm::vec3& Ip, // vec3 point intensity (Ipred, Ipgreen, Ipblue)
-                  // const glm::vec3& L, // light source position
-                  // ///////////////////  material properties
-                  // float Ka, const glm::vec3& Oa, 
-                  // float Kd, const glm::vec3& Od, 
-                  // float Ks, const glm::vec3& Os, 
-                  // float Fatt, float n) 
-// {
-     
-    // glm::vec3 p1 (-33.978017f, -34.985076f,  50.214926f);
-    // glm::vec3 p2 ( 84.192943f, -13.784394f, -50.214926f);
-    // glm::vec3 p3 (-16.236910f,  83.754546f, -50.214926f);
-    // glm::vec3 e1 (p1-p2);
-    // glm::vec3 e2 (p2-p3);
-    // glm::vec3 e3 (p3-p1);
-    // glm::vec3 N = ((glm::cross(e1,e2) + glm::cross(e2,e3) + glm::cross(e3,e1))/glm::vec3(3,3,3));
-    // std::cout << "N = (" << N[0] << "," << N[1] << "," << N[2] << ")" << std::endl;
-    // glm::vec3 R = N * glm::vec3(2,2,2) * (N * L) - L;
-    // std::cout << "R = (" << R[0] << "," << R[1] << "," << R[2] << ")" << std::endl;
-    // glm::vec3 V = p1 - L;
-    // // Red, Green, Blue
-    // // R_ambient
-    // glm::vec3 fattv (Fatt, Fatt, Fatt);
-    // float IPhongR = Ka * Od * Ia + //Ambient
-                    // Kd * Od * fattv * Ip * (L * N) + //Diffuse
-                    // Ks * Os * fattv * Ip * glm::pow((R * V),n); // specular
-    // // std::cout << IPhongR[1] << std::endl;   
-// }
+static void Phong(const glm::vec3& Ia, // vec3 ambient light source(Ired, Igreen, Iblue) 
+                  const glm::vec3& Ip, // vec3 point intensity (Ipred, Ipgreen, Ipblue)
+                  const glm::vec3& Lp, // light source position
+                  const glm::vec3& PRP, 
+                  const glm::vec3& VRP,
+                  ///////////////////  material properties
+                  float Ka, const glm::vec3& Oa, 
+                  float Kd, const glm::vec3& Od, 
+                  float Ks, const glm::vec3& Os, 
+                  float Fatt, float n) 
+{
+    glUniform4f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uLightPos"), Lp[0], Lp[1], Lp[2], 1.0);
+    glUniform1i(glGetUniformLocation(triangleShaderProgram.getProgram(), "un"), n);
+    
+
+    glm::vec3 ep = PRP + VRP;                                      
+    glUniform4f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uViewPos"), ep[0], ep[1], ep[2], 1.0);
+
+    glm::vec3 amb (Ka * Od * Ia);
+    glUniform4f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uAmb"), amb[0], amb[1], amb[2], 1.0);
+
+
+    glm::vec3 fattv (Fatt, Fatt, Fatt);
+    glm::vec3 dif (Kd * Od * fattv * Ip);
+    glUniform4f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uDif"), dif[0], dif[1], dif[2], 1.0);
+
+
+    glm::vec3 spe (Ks * Os * fattv * Ip);
+    glUniform4f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uSpe"), spe[0], spe[1], spe[2], 1.0);
+    
+    // std::cout << "ambient = ("  << amb[0] << ", " << amb[1] << ", " << amb[2] << ")" << std::endl;   
+    // std::cout << "diffuse = ("  << dif[0] << ", " << dif[1] << ", " << dif[2] << ")" << std::endl;   
+    // std::cout << "specular = (" << spe[0] << ", " << spe[1] << ", " << spe[2] << ")" << std::endl;   
+    // std::cout << "N = ("        << N[0]   << ","  << N[1]   << ", " << N[2]   << ")" << std::endl;
+    // std::cout << "Eyepos = ("   << ep[0]  << ","  << ep[1]  << ", " << ep[2]  << ")" << std::endl;
+    // std::cout << "n = "         << n      <<                                            std::endl;
+}
 
 std::ostream& operator << (std::ostream& s, glm::vec3 const& v) {
     s << " ";
@@ -96,8 +121,6 @@ std::ostream& operator << (std::ostream& s, glm::mat4 const& v) {
         s << std::endl; 
     } return s; 
 }
-
-
 
 static glm::mat4 getPerspectiveProjectionMatrix(const glm::vec3& VRP,
 									const glm::vec3& VPN,
@@ -143,21 +166,55 @@ static void renderSceneCB() {
 
 	glm::mat4 modelMatrix;
 	
-	glm::vec3 vrp(0.0f, 0.0f, 125.0f);
-	glm::vec3 vpn(0.0f, 0.0f, 1.0f);
-	glm::vec3 vup(0.0f, 1.0f, 0.0f);
-	glm::vec3 prp(0.0f,0.0f, 50.0f);
-	float uMin = -25.0f, vMin = -25.0f;
-	float uMax = 25.0f, vMax = 25.0f;
-	float front = 10.0f, back = -800.0f;
-	glm::mat4 perspectiveMatrix = getPerspectiveProjectionMatrix(vrp, vpn, vup, prp, uMax, vMax, uMin, vMin, front, back);
-	
+    glm::vec3 vrp(5.0f, 0.0f, 5.0f);
+    glm::vec3 vpn(std::cos((30.f * M_PI)/180.f), 0.0f, std::sin((30.f * M_PI)/180.f));
+    glm::vec3 vup(0.0f, 0.0f, 1.0f);
+    glm::vec3 prp(0.0f,0.0f, 20.0f);
+    float uMin = -4.0f, vMin = -4.0f;
+    float uMax = 4.0f, vMax = 4.0f;
+    float front = 40.0f, back = -10.0f;
+
+    //triangle
+    // glm::vec3 vrp(0.0f, 0.0f, 125.0f);
+    // glm::vec3 vpn(0.0f ,0.0f, 1.0f); 
+    // glm::vec3 vup(0.0f, 1.0f, 0.0f);
+    // glm::vec3 prp(0.0f,0.0f, 50.0f);
+    // float uMin = -25.0f, vMin = -25.0f;
+    // float uMax = 25.0f, vMax = 25.0f;
+    // float front = 10.0f, back = -800.0f;
+    
+    glm::mat4 perspectiveMatrix = getPerspectiveProjectionMatrix(vrp, vpn, vup, prp, uMax, vMax, uMin, vMin, front, back);
+
 	glUniformMatrix4fv(glGetUniformLocation(triangleShaderProgram.getProgram(), "uModelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 	glUniformMatrix4fv(glGetUniformLocation(triangleShaderProgram.getProgram(), "uPerspectiveMatrix"), 1, GL_FALSE, glm::value_ptr(perspectiveMatrix));
 
-	glUniform3f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uColour"), 1.0f, 1.0f, 0.0f);
-	curve.draw();
+    //Light
+    glm::vec3 Ia(0.5f, 0.5f, 0.5f);
+    glm::vec3 Ip(1.0f, 1.0f, 1.0f);
+    glm::vec3 Lpos (266.395325f, 274.291267f, -43.696048);
 
+    float Ka = 0.5f;
+    glm::vec3 Oa(0.f, 1.f, 0.f);
+    float Kd = 0.75f;
+    glm::vec3 Od(0.f, 1.f, 0.f);
+    float Ks = 0.9f;
+    glm::vec3 Os(1.f, 1.f, 1.f);
+
+    float Fatt = 1.0f;
+    int n = 20;
+
+    Phong(Ia, Ip, Lpos, prp, vrp, Ka, Oa, Kd, Od, Ks, Os, Fatt, n);
+
+    // for (int i = 0; i < buffers.size(); i++)
+    // {
+        // glm::vec3 Normal = glm::cross((patches.at(i)[0][0] - patches.at(i)[0][3]),(patches.at(i)[0][3] - patches.at(i)[3][3]));
+        // glm::vec3 Nor = normals.at(i);
+        // glm::vec3 N = glm::normalize(glm::vec3(Nor[0],Nor[1],Nor[2]+0.00001f));
+
+        // glUniform4f(glGetUniformLocation(triangleShaderProgram.getProgram(), "uNormal"), N[0], N[1], N[2], 1.0);
+    // buffers.at(i).draw();
+    // }
+    patch.draw();
     glutSwapBuffers();
 }
 
@@ -167,7 +224,28 @@ static void initializeGlutCallbacks() {
 
 static void intializeShadersAndGLObjects() {
 	triangleShaderProgram.init(sVertexShader, sFragmentShader);
-    curve.initializeBuffers(triangleShaderProgram);
+
+    // std::vector<BezierPatch> patches;
+    // ReadBezierPatches("data/teapot.data", patches);
+
+    // BezierPatch G(glm::vec3(-1.0f,  1.0f, 0.0f), glm::vec3(-0.5f,  1.0f, 0.0f),
+                  // glm::vec3( 0.5f,  1.0f, 0.0f), glm::vec3( 1.0f,  1.0f, 0.0f),
+                  // glm::vec3(-1.0f,  0.5f, 0.0f), glm::vec3(-0.5f,  0.5f, 1.0f),
+                  // glm::vec3( 0.5f,  0.5f, 1.0f), glm::vec3( 1.0f,  0.5f, 0.0f),
+                  // glm::vec3(-1.0f, -0.5f, 0.0f), glm::vec3(-0.5f, -0.5f, 1.0f),
+                  // glm::vec3( 0.5f, -0.5f, 1.0f), glm::vec3( 1.0f, -0.5f, 0.0f),
+                  // glm::vec3(-1.0f, -1.0f, 0.0f), glm::vec3(-0.5f, -1.0f, 0.0f),
+                  // glm::vec3( 0.5f, -1.0f, 0.0f), glm::vec3( 1.0f, -1.0f, 0.0f));
+    // patches.push_back(G);
+    // for (int i = 0; i < patches.size(); i++)
+    // {
+        // patch.initializeBuffers(triangleShaderProgram, patches.at(i));
+        // glm::vec3 Normal = glm::cross((patches.at(i)[0][0] - patches.at(i)[0][3]),(patches.at(i)[0][3] - patches.at(i)[3][3]));
+        // normals.push_back(Normal);
+        // buffers.push_back(patch);
+    // }
+    patch.initializeBuffers(triangleShaderProgram);
+
 }
 
 int main(int argc, char** argv)
@@ -176,7 +254,7 @@ int main(int argc, char** argv)
     glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB);
     glutInitWindowSize(600, 600);
     glutInitWindowPosition(100, 100);
-    glutCreateWindow("Assignment 4");
+    glutCreateWindow("Final Assignment");
 
     initializeGlutCallbacks();
 
@@ -197,20 +275,6 @@ int main(int argc, char** argv)
 	}
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-
-    // glm::vec3 Ia(0.5f, 0.5f, 0.5f);
-    // glm::vec3 Ip(1.0f, 1.0f, 1.0f);
-    // glm::vec3 L (266.395325f, 274.291267f, -43.696048);
-    // float Ka = 0.5f;
-    // glm::vec3 Oa(0.f, 1.f, 0.f);
-    // float Kd = 0.75f;
-    // glm::vec3 Od(0.f, 1.f, 0.f);
-    // float Ks = 0.9f;
-    // glm::vec3 Os(1.f, 1.f, 1.f);
-    // float Fatt = 1.0f;
-    // int n = 20;
-    // Phong(Ia, Ip, L, Ka, Oa, Kd, Od, Ks, Os, Fatt, n);
 
 	intializeShadersAndGLObjects();
 

@@ -1,0 +1,52 @@
+\documentclass{article}
+
+% \usepackage[utf8]{inputenc} %Stationær ÆØÅ
+\usepackage[ansinew]{inputenc} %Bærbar ÆØÅ?
+
+%\usepackage{url} % Allows hyperlinks
+\usepackage{minted}
+\usepackage[hyphens]{url} %URLs
+\usepackage{graphicx} % Allows figures
+\usepackage{etoolbox} %for configuration of sloppy
+\usepackage{tabularx}
+\usepackage{pgfgantt}
+%Section style
+\usepackage{xcolor}
+
+
+\definecolor{secnum}{RGB}{102,102,102}
+
+\makeatletter
+    \def\@seccntformat#1{\llap{\color{secnum}\csname the#1\endcsname\hskip 16pt}}
+\makeatother
+%end section style
+
+{\sloppy}{\hbadness 10000\relax}{}{} %adds hbadness to sloppy
+\setlength{\paperheight}{297mm} %Sets the page to an A4
+\setlength{\paperwidth}{210mm}        %Sets the page to an A4
+
+\begin{document}
+
+\begin{center}
+\section*{Agenda for Haskell QuantLib 12/3/14}
+\end{center}
+\begin{itemize}
+\item{Synopsis:} I attached the synopsis, if you wish to read it beforehand.
+    \begin{itemize}
+        \item{\textbf{Project size:}} why I only picked vanillaswap.
+        \item{\textbf{Time Schedule:}} The synopsis time schedule and my thoughts on time management.
+        \item{\textbf{General thoughts:}} If you have anything to add.
+    \end{itemize}
+\item{Class Diagram:} I could not attach the class diagram, as it is quite large.
+    \begin{itemize}
+        \item{\textbf{QL full class diagram:}} Need a smart way to limiting this. 
+        \item{\textbf{Implementation cycles:}} The way i plan on working. 
+    \end{itemize}
+\end{itemize}
+
+
+% \newpage
+% \input{../rapport/Synopsis.tex}
+
+\end{document}
+

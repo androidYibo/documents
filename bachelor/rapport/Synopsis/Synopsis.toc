@@ -1,0 +1,10 @@
+\contentsline {section}{\numberline {1}Project Title}{1}{section.1}
+\contentsline {section}{\numberline {2}Problem Definition}{1}{section.2}
+\contentsline {section}{\numberline {3}Learning Goals}{1}{section.3}
+\contentsline {section}{\numberline {4}Project Justification}{1}{section.4}
+\contentsline {subsection}{\numberline {4.1}Justification of a Quantitative Library}{1}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Language Justification}{2}{subsection.4.2}
+\contentsline {section}{\numberline {5}Project Specifications}{2}{section.5}
+\contentsline {section}{\numberline {6}Project Limitations}{3}{section.6}
+\contentsline {section}{\numberline {7}Schedule}{3}{section.7}
+\contentsline {subsection}{\numberline {7.1}Description}{3}{subsection.7.1}
